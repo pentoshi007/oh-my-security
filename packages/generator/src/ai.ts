@@ -3,7 +3,7 @@ import type { AttackType, BlueTeamContent, RedTeamContent } from './types.js';
 
 export class AIContentGenerator {
   private token: string;
-  private model = 'gpt2'; // Reliable free model
+  private model = 'mistralai/Mistral-7B-Instruct-v0.2'; // Reliable free model
 
   constructor(token: string) {
     this.token = token;
@@ -153,40 +153,55 @@ Write technical, detailed content for cybersecurity professionals. Include speci
    * Call Hugging Face Inference API
    */
   private async generateContent(prompt: string): Promise<string> {
-    try {
-      const response = await axios.post(
-        `https://api-inference.huggingface.co/models/${this.model}`,
-        {
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 2048,
-            temperature: 0.7,
-            top_p: 0.9,
-            do_sample: true,
-            repetition_penalty: 1.1,
-            return_full_text: false
+    for (let i = 0; i < 3; i++) { // Retry up to 3 times
+      try {
+        const response = await axios.post(
+          `https://api-inference.huggingface.co/models/${this.model}`,
+          {
+            inputs: prompt,
+            parameters: {
+              max_new_tokens: 2048,
+              temperature: 0.7,
+              top_p: 0.9,
+              do_sample: true,
+              repetition_penalty: 1.1,
+              return_full_text: false
+            },
           },
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 30000, // 30 second timeout
+          {
+            headers: {
+              'Authorization': `Bearer ${this.token}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 60000, // 60 second timeout for larger models
+          }
+        );
+
+        if (response.status === 503) { // Model is loading
+          console.log(`Model is loading, retrying in 20 seconds... (Attempt ${i + 1}/3)`);
+          await new Promise(resolve => setTimeout(resolve, 20000));
+          continue;
         }
-      );
 
-      if (response.data.error) {
-        throw new Error(`Hugging Face API error: ${response.data.error}`);
-      }
+        if (response.data.error) {
+          throw new Error(`Hugging Face API error: ${response.data.error}`);
+        }
 
-      return response.data[0]?.generated_text || prompt;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`AI generation failed: ${error.response?.data?.error || error.message}`);
+        return response.data[0]?.generated_text || prompt;
+      } catch (error) {
+        if (i < 2) {
+          console.log(`AI generation failed, retrying in 5 seconds... (Attempt ${i + 1}/3)`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        } else {
+          if (axios.isAxiosError(error)) {
+            const errorMessage = error.response?.data?.error || error.message;
+            throw new Error(`AI generation failed after 3 attempts: ${errorMessage}`);
+          }
+          throw error;
+        }
       }
-      throw error;
     }
+    throw new Error('AI generation failed after multiple retries.');
   }
 
   /**
