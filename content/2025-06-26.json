@@ -2,11 +2,11 @@
   "date": "2025-06-26",
   "attackType": "Data Breach",
   "article": {
-    "title": "Patient death linked to cyber attack on NHS, hospital trust says",
-    "url": "https://news.sky.com/story/patient-death-linked-to-cyber-attack-on-nhs-hospital-trust-says-13388485",
-    "source": "Sky.com",
-    "publishedAt": "2025-06-25T13:41:00Z",
-    "summary": "The death of a person has been linked to last year's cyber attack on the NHS."
+    "title": "Bitdefender Launches Powerful External Attack Surface Management Solution for Businesses and Managed Service Providers",
+    "url": "https://vmblog.com:443/archive/2025/06/25/bitdefender-launches-powerful-external-attack-surface-management-solution-for-businesses-and-managed-service-providers.aspx",
+    "source": "Vmblog.com",
+    "publishedAt": "2025-06-25T14:14:00Z",
+    "summary": "Bitdefender announced Bitdefender GravityZone External Attack Surface Management (EASM), a new solution that gives businesses, managed service providers (MSPs) and their customers comprehensive visibility into their internet-facing assets and associated"
   },
   "content": {
     "blueTeam": {
@@ -21,7 +21,7 @@
     }
   },
   "metadata": {
-    "generatedAt": "2025-06-26T13:56:44.047Z",
+    "generatedAt": "2025-06-26T14:26:02.112Z",
     "version": "1.0.0"
   }
 }
