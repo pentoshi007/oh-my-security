@@ -1,0 +1,4 @@
+{
+  "/archive/page": "app/archive/page.js",
+  "/day/[date]/page": "app/day/[date]/page.js"
+}

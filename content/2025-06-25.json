@@ -1,0 +1,27 @@
+{
+  "date": "2025-06-25",
+  "attackType": "SQL Injection",
+  "article": {
+    "title": "Major Healthcare Provider Breached via SQL Injection Attack",
+    "url": "https://example.com/healthcare-breach",
+    "source": "CyberSecurity News",
+    "publishedAt": "2024-12-26T08:00:00Z",
+    "summary": "A prominent healthcare provider experienced a significant data breach affecting over 100,000 patient records when attackers exploited an SQL injection vulnerability in their patient portal system."
+  },
+  "content": {
+    "blueTeam": {
+      "about": "SQL Injection is a code injection technique that exploits vulnerabilities in an application's database layer. It occurs when user-supplied input is incorrectly filtered for string literal escape characters embedded in SQL statements or when user input is not strongly typed.",
+      "howItWorks": "Attackers insert malicious SQL statements into application inputs that are passed to a database for execution. By manipulating SQL queries, attackers can view, insert, modify, or delete data in the database, potentially bypassing authentication and authorization mechanisms.",
+      "impact": "SQL injection attacks can lead to unauthorized data access, data modification, data deletion, and complete database compromise. In severe cases, attackers may gain administrative access to the database server and potentially the underlying operating system."
+    },
+    "redTeam": {
+      "objectives": "Extract sensitive data, bypass authentication mechanisms, modify database records, gain administrative access, or use the database server as a pivot point for lateral movement within the network.",
+      "methodology": "1. Identify input fields and parameters\n2. Test for SQL injection vulnerabilities using manual techniques or automated tools\n3. Craft malicious SQL payloads to extract information\n4. Escalate privileges if possible\n5. Extract sensitive data or maintain persistence",
+      "exploitCode": "# Basic SQL injection payloads\n' OR '1'='1' --\n' UNION SELECT username, password FROM users --\n'; DROP TABLE users; --\n\n# Time-based blind SQL injection\n' AND (SELECT SLEEP(5)) --\n\n# Boolean-based blind SQL injection\n' AND (SELECT SUBSTRING(username,1,1) FROM users WHERE id=1)='a' --"
+    }
+  },
+  "metadata": {
+    "generatedAt": "2024-12-26T10:00:00Z",
+    "version": "1.0.0"
+  }
+} 
