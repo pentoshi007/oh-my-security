@@ -3,7 +3,7 @@ import type { AttackType, BlueTeamContent, RedTeamContent } from './types.js';
 
 export class AIContentGenerator {
   private genAI: GoogleGenerativeAI;
-  private model = 'gemini-1.5-flash'; // Fast and powerful model suitable for daily generation
+  private model = 'gemini-2.5-flash'; // Fast and powerful model suitable for daily generation
 
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
