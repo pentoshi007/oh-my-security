@@ -2,11 +2,11 @@
   "date": "2025-06-26",
   "attackType": "Data Breach",
   "article": {
-    "title": "Data breach reported by insurance company with millions of customers: Here’s what to know",
-    "url": "https://biztoc.com/x/d7f5eb8d5e2aec75",
-    "source": "Biztoc.com",
-    "publishedAt": "2025-06-25T11:33:44Z",
-    "summary": "Supplemental insurance company Aflac has confirmed it is investigating a data breach involving customer information. In a statement issued on June 20, the company said it became aware of \"suspicious activity on our network\" on June 12.\nAflac says a sophistica…"
+    "title": "Welcome to the New Cyber Battleground",
+    "url": "https://www.fortinet.com/blog/ciso-collective/welcome-to-the-new-cyber-battleground",
+    "source": "Fortinet.com",
+    "publishedAt": "2025-06-25T13:00:00Z",
+    "summary": "The Iran–Israel conflict marks a new era in cyber warfare. Learn how global attacks are evolving and how to protect critical systems from modern threats.…"
   },
   "content": {
     "blueTeam": {
@@ -21,7 +21,7 @@
     }
   },
   "metadata": {
-    "generatedAt": "2025-06-26T11:48:10.325Z",
+    "generatedAt": "2025-06-26T13:09:15.968Z",
     "version": "1.0.0"
   }
 }
