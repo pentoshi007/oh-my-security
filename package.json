@@ -1,0 +1,41 @@
+{
+  "name": "oh-my-security",
+  "version": "1.0.0",
+  "description": "A fully-automated, zero-cost website that publishes a fresh, structured breakdown of a real-world cyber-attack every day.",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "start": "npm run start --workspace=apps/web",
+    "generate": "npm run start --workspace=packages/generator",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "test": "npm run test --workspaces"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aniket00736/oh-my-security.git"
+  },
+  "keywords": [
+    "cybersecurity",
+    "security",
+    "red-team",
+    "blue-team",
+    "automation",
+    "nextjs"
+  ],
+  "author": "Aniket Pandey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Aniket00736/oh-my-security/issues"
+  },
+  "homepage": "https://github.com/Aniket00736/oh-my-security#readme",
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+} 
