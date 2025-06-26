@@ -2,6 +2,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import ora from 'ora';
+import type { Ora } from 'ora';
 import chalk from 'chalk';
 import dotenv from 'dotenv';
 
@@ -10,12 +11,13 @@ import { AIContentGenerator } from './ai.js';
 import { getCurrentDate, detectAttackType } from './utils.js';
 import { DailyContentSchema, type DailyContent } from './types.js';
 
-dotenv.config({ path: join(__dirname, '../../.env') });
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export async function generateAndSaveContent(spinner: ora.Ora) {
+// Load environment variables from the root .env file
+dotenv.config({ path: join(__dirname, '../../../.env') });
+
+export async function generateAndSaveContent(spinner: Ora) {
   const newsApiKey = process.env.NEWS_API_KEY;
   const hfToken = process.env.HF_TOKEN;
 
