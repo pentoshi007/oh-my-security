@@ -12,8 +12,87 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: "Oh-My-Security",
-  description: "A daily-updated, zero-cost cybersecurity learning platform breaking down real-world attacks for educational purposes.",
+  title: {
+    default: "Oh-My-Security - Daily Cybersecurity Education",
+    template: "%s | Oh-My-Security"
+  },
+  description: "Master cybersecurity with daily real-world attack analysis. Learn defensive blue team strategies and offensive red team techniques. Free educational content for security professionals.",
+  keywords: [
+    "cybersecurity education", 
+    "blue team", 
+    "red team", 
+    "penetration testing", 
+    "threat intelligence", 
+    "security analysis", 
+    "cyber attacks", 
+    "incident response", 
+    "ethical hacking", 
+    "InfoSec training"
+  ],
+  authors: [{ name: "Oh-My-Security Team" }],
+  creator: "Oh-My-Security",
+  publisher: "Oh-My-Security",
+  applicationName: "Oh-My-Security",
+  category: "Education",
+  classification: "Cybersecurity Education",
+  
+  // Open Graph
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://oh-my-security.vercel.app",
+    siteName: "Oh-My-Security",
+    title: "Oh-My-Security - Daily Cybersecurity Education",
+    description: "Master cybersecurity with daily real-world attack analysis. Learn blue team defense and red team offense techniques.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Oh-My-Security - Daily Cybersecurity Education",
+      },
+    ],
+  },
+  
+  // Twitter
+  twitter: {
+    card: "summary_large_image",
+    site: "@ohmysecurity",
+    creator: "@ohmysecurity",
+    title: "Oh-My-Security - Daily Cybersecurity Education",
+    description: "Master cybersecurity with daily real-world attack analysis. Learn blue team defense and red team offense techniques.",
+    images: ["/og-image.png"],
+  },
+  
+  // Additional Meta
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  
+  // Verification (add when you have accounts)
+  verification: {
+    google: "your-google-verification-code",
+    // other: {
+    //   "msvalidate.01": "your-bing-verification-code",
+    // },
+  },
+  
+  // App-specific
+  manifest: "/manifest.json",
+  
+  // Other
+  metadataBase: new URL("https://oh-my-security.vercel.app"),
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({
