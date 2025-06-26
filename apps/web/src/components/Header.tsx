@@ -21,7 +21,7 @@ export default function Header() {
           {/* Navigation */}
           <nav className="flex items-center gap-6">
             <Link
-              href="/"
+              href="/#today"
               className="text-sm font-medium text-gray-700 hover:text-black transition-colors"
             >
               Today

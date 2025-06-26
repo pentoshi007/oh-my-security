@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import ReactMarkdown from 'react-markdown'
 
 interface ContentTab {
   title: string
@@ -26,59 +27,9 @@ export default function ContentTabs({ blueTeam, redTeam }: ContentTabsProps) {
 
   const isBlueActive = activeTab < blueTeam.length
 
-  const formatContent = (content: string): React.ReactNode[] => {
-    if (!content) return []
-    const lines = content.split('\n')
-    const elements: React.ReactNode[] = []
-    let key = 0
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim()
-      if (line === '') continue
-
-      const numberedMatch = line.match(/^(\d+)\.\s+(.+)/)
-      if (numberedMatch) {
-        const listItems = []
-        let listIndex = i
-        while (listIndex < lines.length) {
-          const currentLine = lines[listIndex].trim()
-          const match = currentLine.match(/^(\d+)\.\s+(.+)/)
-          if (match) {
-            const title = match[2]
-            let description = ''
-            let lookahead = listIndex + 1
-            while (lookahead < lines.length && lines[lookahead].trim() !== '' && !lines[lookahead].trim().match(/^(\d+)\.\s+/)) {
-              description += lines[lookahead].trim() + ' '
-              lookahead++
-            }
-            listItems.push({ title, description: description.trim() })
-            listIndex = lookahead
-          } else {
-            break
-          }
-        }
-        elements.push(
-          <div key={`list-${key++}`} className="space-y-6 my-6">
-            {listItems.map((item, idx) => (
-              <div key={idx}>
-                <p className="font-semibold text-lg">{item.title}</p>
-                {item.description && <p className="mt-2 text-base leading-relaxed">{item.description}</p>}
-              </div>
-            ))}
-          </div>
-        )
-        i = listIndex - 1
-        continue
-      }
-
-      if (line.endsWith(':') && line.length < 100) {
-        elements.push(<h3 key={`header-${key++}`} className="text-xl font-bold mt-8 mb-4">{line}</h3>)
-        continue
-      }
-
-      elements.push(<p key={`para-${key++}`} className="mb-4 leading-relaxed text-base">{line}</p>)
-    }
-    return elements
+  const formatContent = (content: string): React.ReactNode => {
+    if (!content) return null;
+    return <ReactMarkdown>{content}</ReactMarkdown>;
   }
 
   return (

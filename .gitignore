@@ -51,3 +51,6 @@ dist/
 # Temporary files
 tmp/
 temp/
+
+# Subscribers
+subscribers.csv
