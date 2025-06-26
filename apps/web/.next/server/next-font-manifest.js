@@ -1,1 +1,0 @@
-self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/Users/aniketpandey/Desktop/oh-my-security(OMS)/apps/web/src/app/layout\":[\"static/media/95523e6af433889e-s.p.woff2\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"
