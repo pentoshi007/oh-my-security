@@ -3,47 +3,31 @@ import type { AttackType, BlueTeamContent, RedTeamContent } from './types.js';
 
 export class AIContentGenerator {
   private genAI: GoogleGenerativeAI;
-  private model = 'gemini-2.5-flash'; // Fast and powerful model suitable for daily generation
+  private model = 'gemini-2.5-flash';
 
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
-  /**
-   * Generate blue team (defensive) content
-   */
   async generateBlueTeamContent(attackType: AttackType, articleSummary: string): Promise<BlueTeamContent> {
     const prompt = `You are a senior cybersecurity analyst writing educational content for 'Oh-My-Security'.
-Analyze the attack type "${attackType}" with the following news context: "${articleSummary}".
-Produce a detailed, structured analysis.
+Your task is to generate a detailed, structured, and professional analysis for the attack type: "${attackType}".
+Use the following news context: "${articleSummary}".
 
-Format your response exactly as follows, with each section being at least 200 words:
+IMPORTANT:
+- Your response must begin DIRECTLY with "ABOUT SECTION:". Do not add any preamble.
+- Follow the specified format exactly. Do not add extra markdown like asterisks to the section titles.
+
+Format:
 
 ABOUT SECTION:
-[Detailed explanation of what the attack is, its importance, threat landscape, and economic impact.]
+[Detailed explanation of what the attack is, its importance, threat landscape, and economic impact. Minimum 200 words.]
 
 HOW IT WORKS SECTION:
-Provide a detailed technical breakdown with these sub-headings:
-Attack Methodology:
-1. Initial Access Phase
-[Explanation]
-2. Persistence and Escalation Phase  
-[Explanation]
-3. Lateral Movement Phase
-[Explanation]
-4. Objective Execution Phase
-[Explanation]
-5. Cleanup and Evasion Phase
-[Explanation]
+Provide a detailed technical breakdown of how the attack works, including phases like initial access, persistence, lateral movement, objective execution, and cleanup. Use numbered lists or clear paragraphs.
 
 IMPACT SECTION:
-Provide a detailed impact analysis with these sub-headings:
-Financial Consequences:
-[Explanation]
-Operational Impact:
-[Explanation]
-Strategic and Reputational Damage:
-[Explanation]`;
+Provide a detailed impact analysis, covering financial, operational, and strategic/reputational consequences.`;
 
     try {
       const content = await this.generateContent(prompt);
@@ -55,27 +39,30 @@ Strategic and Reputational Damage:
     }
   }
 
-  /**
-   * Generate red team (offensive) content
-   */
   async generateRedTeamContent(attackType: AttackType, articleSummary: string): Promise<RedTeamContent> {
     const prompt = `You are a senior red team operator writing educational content for 'Oh-My-Security'.
-Analyze offensive techniques for the attack type "${attackType}" using the news context: "${articleSummary}".
-Produce a detailed, structured analysis.
+Your task is to generate a detailed, structured, and professional analysis of offensive techniques for the attack type: "${attackType}".
+Use the following news context: "${articleSummary}".
 
-Format your response exactly as follows, with each section being at least 200 words:
+IMPORTANT:
+- Your response must begin DIRECTLY with "OBJECTIVES SECTION:". Do not add any preamble.
+- Follow the specified format exactly. Do not add extra markdown like asterisks to the section titles.
+- For the EXPLOIT CODE SECTION, provide functional, commented, educational code examples.
+
+Format:
 
 OBJECTIVES SECTION:
-Detail the strategic goals attackers achieve with this attack, covering primary and secondary objectives.
+[Detailed explanation of strategic goals. Minimum 200 words.]
 
 METHODOLOGY SECTION:
-Provide a detailed, multi-phase attack methodology from reconnaissance to cleanup.
+[Provide a detailed, multi-phase attack methodology from reconnaissance to cleanup, focusing on offensive techniques.]
 
 EXPLOIT CODE SECTION:
-Provide educational, functional code examples for demonstrating the attack. Include comments explaining the code. For example:
+[Provide educational, functional code examples for demonstrating the attack, with comments. For example:
 # ${attackType} Educational Simulation Framework
 # WARNING: For authorized educational and testing purposes only
-[Provide detailed, working code examples with comments]`;
+...
+]`;
 
     try {
       const content = await this.generateContent(prompt);
@@ -87,9 +74,6 @@ Provide educational, functional code examples for demonstrating the attack. Incl
     }
   }
 
-  /**
-   * Call Google Gemini API
-   */
   private async generateContent(prompt: string): Promise<string> {
     try {
       const generationConfig = {
@@ -122,9 +106,6 @@ Provide educational, functional code examples for demonstrating the attack. Incl
     }
   }
 
-  /**
-   * Parse AI-generated content for blue team sections
-   */
   private parseBlueTeamContent(content: string, attackType: AttackType): BlueTeamContent {
     const extractSection = (text: string, startMarker: string, endMarkers: string[]): string => {
       const startIndex = text.toLowerCase().indexOf(startMarker.toLowerCase());
@@ -144,9 +125,9 @@ Provide educational, functional code examples for demonstrating the attack. Incl
       return text.replace(/^\s*[-*•]\s*/gm, '• ').replace(/^\s*(\d+)\.\s*/gm, '$1. ').replace(/\n\s*\n\s*\n/g, '\n\n').replace(/^\s+/gm, '').trim();
     };
     
-    const aboutSection = extractSection(content, 'ABOUT', ['HOW IT WORKS', 'METHODOLOGY', 'IMPACT']) || extractSection(content, 'About:', ['How it works:', 'Impact:']) || content.split(/(?:How it works|Impact)/i)[0];
-    const howItWorksSection = extractSection(content, 'HOW IT WORKS', ['IMPACT', 'CONCLUSION']) || extractSection(content, 'How it works:', ['Impact:']) || content.split(/How it works/i)[1]?.split(/Impact/i)[0] || '';
-    const impactSection = extractSection(content, 'IMPACT', ['CONCLUSION', 'SUMMARY']) || extractSection(content, 'Impact:', []) || content.split(/Impact/i)[1] || '';
+    const aboutSection = extractSection(content, 'ABOUT SECTION:', ['HOW IT WORKS SECTION:']);
+    const howItWorksSection = extractSection(content, 'HOW IT WORKS SECTION:', ['IMPACT SECTION:']);
+    const impactSection = extractSection(content, 'IMPACT SECTION:', []);
     
     return {
       about: cleanAndFormat(aboutSection) || this.getFallbackBlueTeamContent(attackType).about,
@@ -155,9 +136,6 @@ Provide educational, functional code examples for demonstrating the attack. Incl
     };
   }
 
-  /**
-   * Parse AI-generated content for red team sections
-   */
   private parseRedTeamContent(content: string, attackType: AttackType): RedTeamContent {
     const extractSection = (text: string, startMarker: string, endMarkers: string[]): string => {
       const startIndex = text.toLowerCase().indexOf(startMarker.toLowerCase());
@@ -177,9 +155,9 @@ Provide educational, functional code examples for demonstrating the attack. Incl
       return text.replace(/^\s*[-*•]\s*/gm, '• ').replace(/^\s*(\d+)\.\s*/gm, '$1. ').replace(/\n\s*\n\s*\n/g, '\n\n').replace(/^\s+/gm, '').trim();
     };
     
-    const objectivesSection = extractSection(content, 'OBJECTIVES', ['METHODOLOGY', 'EXPLOIT']) || extractSection(content, 'Objectives:', ['Methodology:', 'Exploit']) || content.split(/(?:Methodology|Exploit)/i)[0];
-    const methodologySection = extractSection(content, 'METHODOLOGY', ['EXPLOIT', 'CODE']) || extractSection(content, 'Methodology:', ['Exploit:', 'Code:']) || content.split(/Methodology/i)[1]?.split(/(?:Exploit|Code)/i)[0] || '';
-    const exploitSection = extractSection(content, 'EXPLOIT', ['CONCLUSION', 'SUMMARY']) || extractSection(content, 'Exploit Code:', []) || extractSection(content, 'Code:', []) || content.split(/(?:Exploit|Code)/i)[1] || '';
+    const objectivesSection = extractSection(content, 'OBJECTIVES SECTION:', ['METHODOLOGY SECTION:']);
+    const methodologySection = extractSection(content, 'METHODOLOGY SECTION:', ['EXPLOIT CODE SECTION:']);
+    const exploitSection = extractSection(content, 'EXPLOIT CODE SECTION:', []);
     
     return {
       objectives: cleanAndFormat(objectivesSection) || this.getFallbackRedTeamContent(attackType).objectives,
@@ -188,9 +166,6 @@ Provide educational, functional code examples for demonstrating the attack. Incl
     };
   }
 
-  /**
-   * Fallback blue team content when AI generation fails
-   */
   private getFallbackBlueTeamContent(attackType: AttackType): BlueTeamContent {
     const fallbacks: Record<string, BlueTeamContent> = {
       'Ransomware': {
@@ -212,9 +187,6 @@ Provide educational, functional code examples for demonstrating the attack. Incl
     };
   }
 
-  /**
-   * Fallback red team content when AI generation fails
-   */
   private getFallbackRedTeamContent(attackType: AttackType): RedTeamContent {
     const fallbacks: Record<string, RedTeamContent> = {
       'Ransomware': {
