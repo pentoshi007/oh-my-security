@@ -14,21 +14,22 @@ import { DailyContentSchema, type DailyContent } from './types.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables from the root .env file
-dotenv.config({ path: join(__dirname, '../../../.env') });
+// Load environment variables from the generator's .env file for local execution.
+// On Vercel, environment variables will be provided directly.
+dotenv.config({ path: join(__dirname, '../.env') });
 
 export async function generateAndSaveContent(spinner: Ora) {
   const newsApiKey = process.env.NEWS_API_KEY;
-  const hfToken = process.env.HF_TOKEN;
+  const googleApiKey = process.env.GOOGLE_API_KEY;
 
-  if (!newsApiKey || !hfToken) {
+  if (!newsApiKey || !googleApiKey) {
     spinner.fail('Missing API keys');
-    console.error(chalk.red('Ensure NEWS_API_KEY and HF_TOKEN are set in the root .env file.'));
+    console.error(chalk.red('Ensure NEWS_API_KEY and GOOGLE_API_KEY are set in the .env file.'));
     throw new Error('Missing API keys');
   }
 
   const newsService = new NewsAPIService(newsApiKey);
-  const aiService = new AIContentGenerator(hfToken);
+  const aiService = new AIContentGenerator(googleApiKey);
 
   spinner.start('Fetching cybersecurity news...');
   const articles = await newsService.fetchCybersecurityNews();
