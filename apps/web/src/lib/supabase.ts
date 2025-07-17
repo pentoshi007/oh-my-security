@@ -55,19 +55,50 @@ export interface DailyContent {
 
 // Content management functions
 export async function storeContentInSupabase(content: any): Promise<void> {
-  const { error } = await supabaseAdmin
+  // First, try to update existing content for the date
+  const { data: existingData, error: selectError } = await supabaseAdmin
     .from('daily_content')
-    .upsert({
-      date: content.date,
-      attack_type: content.attackType,
-      content_data: content,
-      created_at: new Date().toISOString()
-    }, {
-      onConflict: 'date' // Update if date already exists
-    })
+    .select('id, created_at')
+    .eq('date', content.date)
+    .single()
 
-  if (error) {
-    throw new Error(`Failed to store content: ${error.message}`)
+  if (selectError && selectError.code !== 'PGRST116') {
+    // PGRST116 is "not found" error, which is expected for new content
+    throw new Error(`Failed to check existing content: ${selectError.message}`)
+  }
+
+  if (existingData) {
+    // Update existing record, preserve original created_at
+    const { error } = await supabaseAdmin
+      .from('daily_content')
+      .update({
+        attack_type: content.attackType,
+        content_data: content
+        // Don't update created_at - keep original timestamp
+      })
+      .eq('date', content.date)
+
+    if (error) {
+      throw new Error(`Failed to update content: ${error.message}`)
+    }
+
+    console.log(`✅ Updated existing content for ${content.date}`)
+  } else {
+    // Insert new record with current timestamp
+    const { error } = await supabaseAdmin
+      .from('daily_content')
+      .insert({
+        date: content.date,
+        attack_type: content.attackType,
+        content_data: content,
+        created_at: new Date().toISOString()
+      })
+
+    if (error) {
+      throw new Error(`Failed to insert content: ${error.message}`)
+    }
+
+    console.log(`✅ Created new content for ${content.date}`)
   }
 }
 

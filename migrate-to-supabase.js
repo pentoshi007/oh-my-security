@@ -5,9 +5,18 @@ const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
 
+// Load environment variables
+require('dotenv').config({ path: './apps/web/.env.local' });
+
 // Supabase configuration
-const supabaseUrl = 'https://pjgouvtbcjagpegszgfz.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || 'REPLACE_WITH_YOUR_ACTUAL_SERVICE_ROLE_KEY';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://pjgouvtbcjagpegszgfz.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseServiceKey || supabaseServiceKey === 'REPLACE_WITH_YOUR_ACTUAL_SERVICE_ROLE_KEY') {
+  console.error('❌ Please set your SUPABASE_SERVICE_KEY in apps/web/.env.local');
+  console.error('Go to Supabase Dashboard → Settings → API → Copy the service_role key');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -38,24 +47,54 @@ async function migrateContent() {
         continue;
       }
       
-      // Insert into Supabase
-      const { data, error } = await supabase
+      // Check if content already exists for this date
+      const { data: existingData, error: selectError } = await supabase
         .from('daily_content')
-        .upsert({
-          date: content.date,
-          attack_type: content.attackType,
-          content_data: content,
-          created_at: new Date().toISOString()
-        }, {
-          onConflict: 'date'
-        });
-      
-      if (error) {
-        console.log(`❌ Error inserting ${file}:`, error.message);
+        .select('id, created_at')
+        .eq('date', content.date)
+        .single();
+
+      if (selectError && selectError.code !== 'PGRST116') {
+        console.log(`❌ Error checking ${file}:`, selectError.message);
         errorCount++;
+        continue;
+      }
+
+      if (existingData) {
+        // Update existing record, preserve original created_at
+        const { error } = await supabase
+          .from('daily_content')
+          .update({
+            attack_type: content.attackType,
+            content_data: content
+          })
+          .eq('date', content.date);
+
+        if (error) {
+          console.log(`❌ Error updating ${file}:`, error.message);
+          errorCount++;
+        } else {
+          console.log(`✅ Successfully updated ${file}`);
+          successCount++;
+        }
       } else {
-        console.log(`✅ Successfully migrated ${file}`);
-        successCount++;
+        // Insert new record
+        const { error } = await supabase
+          .from('daily_content')
+          .insert({
+            date: content.date,
+            attack_type: content.attackType,
+            content_data: content,
+            created_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.log(`❌ Error inserting ${file}:`, error.message);
+          errorCount++;
+        } else {
+          console.log(`✅ Successfully migrated ${file}`);
+          successCount++;
+        }
       }
       
     } catch (error) {
