@@ -84,12 +84,15 @@ export async function GET(request: Request) {
     console.error('❌ Cron job failed after', duration, 'ms:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    // Log the error stack trace on the server for debugging
+    if (error instanceof Error && error.stack) {
+      console.error('❌ Error stack trace:', error.stack);
+    }
     
     return new NextResponse(JSON.stringify({ 
       success: false, 
       error: errorMessage,
-      stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
       timestamp: new Date().toISOString(),
       duration: `${duration}ms`
     }), {
