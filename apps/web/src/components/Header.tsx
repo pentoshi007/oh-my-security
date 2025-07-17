@@ -63,7 +63,7 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            <Link href="/#today" className="text-sm font-medium text-gray-700 hover:text-blue-600 rounded-lg px-4 py-2 transition-all duration-200 hover:bg-gray-500/10">
+            <Link href="/#today" className="flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 rounded-lg px-4 py-2 transition-all duration-200 hover:bg-gray-500/10">
               Today
             </Link>
             <Link href="/archive" className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-blue-600 rounded-lg px-4 py-2 transition-all duration-200 hover:bg-gray-500/10">
