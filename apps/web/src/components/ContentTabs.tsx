@@ -34,23 +34,62 @@ export default function ContentTabs({ blueTeam, redTeam }: ContentTabsProps) {
 
   return (
     <div>
-      {/* Tab Buttons */}
+      {/* Tab Buttons - Mobile Optimized */}
       <div className="border-b border-gray-200">
-        <div className="max-w-full overflow-x-auto">
-          <div className="flex items-center justify-start md:justify-center gap-2 sm:gap-4 -mb-px px-4">
+        {/* Mobile: Stack tabs vertically */}
+        <div className="block sm:hidden">
+          <div className="grid grid-cols-2 gap-2 p-4 -mb-px">
             {tabs.map((tab, index) => {
               const isActive = activeTab === index
               return (
                 <button
                   key={tab.title}
                   onClick={() => setActiveTab(index)}
-                  className={`relative px-3 sm:px-4 py-3 text-sm sm:text-base font-medium transition-colors focus:outline-none ${isActive
+                  className={`relative px-4 py-4 text-sm font-medium transition-all duration-300 rounded-lg border-2 ${
+                    isActive
+                      ? (isBlueActive 
+                          ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' 
+                          : 'bg-red-50 border-red-200 text-red-700 shadow-sm')
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <span className={`transition-colors ${
+                      isActive 
+                        ? (isBlueActive ? 'text-blue-500' : 'text-red-500') 
+                        : 'text-gray-400'
+                    }`}>
+                      {tab.icon}
+                    </span>
+                    <span className="text-center leading-tight">{tab.title}</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Desktop/Tablet: Horizontal tabs without scrolling */}
+        <div className="hidden sm:block">
+          <div className="flex items-center justify-center gap-2 -mb-px px-4">
+            {tabs.map((tab, index) => {
+              const isActive = activeTab === index
+              return (
+                <button
+                  key={tab.title}
+                  onClick={() => setActiveTab(index)}
+                  className={`relative px-4 md:px-6 py-3 text-sm md:text-base font-medium transition-colors focus:outline-none ${
+                    isActive
                       ? (isBlueActive ? 'text-blue-600' : 'text-red-600')
                       : 'text-gray-500 hover:text-black'
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`transition-colors ${isActive ? (isBlueActive ? 'text-blue-500' : 'text-red-500') : 'text-gray-400'}`}>
+                    <span className={`transition-colors ${
+                      isActive 
+                        ? (isBlueActive ? 'text-blue-500' : 'text-red-500') 
+                        : 'text-gray-400'
+                    }`}>
                       {tab.icon}
                     </span>
                     {tab.title}
@@ -58,7 +97,9 @@ export default function ContentTabs({ blueTeam, redTeam }: ContentTabsProps) {
                   {isActive && (
                     <motion.div
                       layoutId="active-tab-indicator"
-                      className={`absolute bottom-0 left-0 right-0 h-0.5 ${isBlueActive ? 'bg-blue-500' : 'bg-red-500'}`}
+                      className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                        isBlueActive ? 'bg-blue-500' : 'bg-red-500'
+                      }`}
                     />
                   )}
                 </button>
@@ -68,8 +109,8 @@ export default function ContentTabs({ blueTeam, redTeam }: ContentTabsProps) {
         </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="pt-10">
+      {/* Tab Content - Mobile Optimized */}
+      <div className="pt-6 sm:pt-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -77,17 +118,18 @@ export default function ContentTabs({ blueTeam, redTeam }: ContentTabsProps) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={`p-6 sm:p-8 rounded-2xl transition-colors backdrop-blur-lg border ${isBlueActive
-              ? 'bg-blue-500/10 border-blue-500/20'
-              : 'bg-red-500/10 border-red-500/20'
-              }`}
+            className={`p-4 sm:p-6 md:p-8 rounded-2xl transition-colors backdrop-blur-lg border ${
+              isBlueActive
+                ? 'bg-blue-500/10 border-blue-500/20'
+                : 'bg-red-500/10 border-red-500/20'
+            }`}
           >
             {tabs[activeTab].title === 'Exploit Code' ? (
-              <div className="bg-gray-900/80 text-sm text-green-400 p-4 rounded-xl overflow-x-auto font-mono backdrop-blur-sm border border-gray-500/20">
+              <div className="bg-gray-900/80 text-sm text-green-400 p-3 sm:p-4 rounded-xl overflow-x-auto font-mono backdrop-blur-sm border border-gray-500/20">
                 <pre><code>{tabs[activeTab].content}</code></pre>
               </div>
             ) : (
-              <div className="prose prose-lg max-w-5xl mx-auto prose-gray prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-li:text-gray-800">
+              <div className="prose prose-sm sm:prose-lg max-w-5xl mx-auto prose-gray prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-li:text-gray-800">
                 {formatContent(tabs[activeTab].content)}
               </div>
             )}
