@@ -3,10 +3,10 @@ import { getContentByDate } from '../../../../lib/content'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { date: string } }
+  context: { params: Promise<{ date: string }> }
 ) {
   try {
-    const { date } = params
+    const { date } = await context.params
     
     // Validate date format (YYYY-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
