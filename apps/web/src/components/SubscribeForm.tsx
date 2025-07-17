@@ -49,7 +49,7 @@ export default function SubscribeForm() {
         <form onSubmit={handleSubmit} className="max-w-md mx-auto">
           <div className="flex flex-col sm:flex-row gap-4 items-center">
             <div className="relative flex-grow w-full">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
               <input
                 type="email"
                 name="email"
@@ -57,7 +57,7 @@ export default function SubscribeForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-800 focus:ring-2 focus:ring-blue-300 focus:outline-none transition"
+                className="w-full pl-12 pr-4 py-4 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-300 focus:outline-none transition"
               />
             </div>
             <button

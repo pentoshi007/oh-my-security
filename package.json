@@ -13,7 +13,9 @@
     "start": "npm run start --workspace=apps/web",
     "generate": "npm run start --workspace=packages/generator",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
-    "test": "npm run test --workspaces"
+    "test": "npm run test --workspaces",
+    "fix-dev": "cd apps/web && rm -rf .next && npm run dev",
+    "fresh-start": "cd apps/web && rm -rf .next node_modules && npm install && npm run dev"
   },
   "repository": {
     "type": "git",
