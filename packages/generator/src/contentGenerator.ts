@@ -115,4 +115,83 @@ export async function generateAndSaveContent(spinner: Ora) {
     }
     spinner.text = `Selecting attack methodology (attempt ${attempts})...`;
     spinner.succeed(`Selected: ${selectedAttack.name}`);
-    console.log(chalk.blue(`
+    console.log(chalk.blue(`📚 Category: ${selectedAttack.category}`));
+    console.log(chalk.blue(`🎯 Difficulty: ${selectedAttack.difficulty}`));
+
+    spinner.start(`Searching for news about ${selectedAttack.name}...`);
+    articles = await newsService.fetchNewsForAttack(selectedAttack);
+
+    if (articles.length > 0) {
+      spinner.succeed(`Found ${articles.length} relevant articles`);
+      break;
+    }
+
+    spinner.warn(`No recent news found for ${selectedAttack.name} (attempt ${attempts})`);
+    skippedAttacks.push(selectedAttack.id);
+    recentAttackIds = [...recentAttackIds, selectedAttack.id];
+
+    if (attempts === maxAttempts) {
+      console.log(chalk.yellow('Max attempts reached. Falling back to general news for last selected attack...'));
+      const generalArticles = await newsService.fetchCybersecurityNews();
+      articles = generalArticles.slice(0, 3);
+      spinner.succeed(`Found ${articles.length} general articles`);
+    }
+  }
+
+  if (!selectedAttack) {
+    throw new Error('Failed to select an attack methodology');
+  }
+
+  // Display the top news article
+  if (articles.length > 0) {
+    console.log(chalk.gray(`📰 Top article: "${articles[0].title}" - ${articles[0].source.name}`));
+  }
+
+  // Generate content
+  spinner.start('Generating educational content...');
+  const [blueTeamContent, redTeamContent] = await Promise.all([
+    aiService.generateBlueTeamContent(selectedAttack, articles),
+    aiService.generateRedTeamContent(selectedAttack, articles),
+  ]);
+
+  const dailyContent: DailyContent = {
+    date: currentDate,
+    attackType: selectedAttack.name as any, // We'll need to update the types
+    article: articles.length > 0 ? {
+      title: articles[0].title,
+      url: articles[0].url,
+      source: articles[0].source.name,
+      publishedAt: articles[0].publishedAt,
+      summary: articles[0].description || articles[0].title,
+    } : {
+      title: `Educational Content: ${selectedAttack.name}`,
+      url: 'https://oh-my-security.com',
+      source: 'Oh-My-Security',
+      publishedAt: new Date().toISOString(),
+      summary: selectedAttack.description,
+    },
+    content: {
+      blueTeam: blueTeamContent,
+      redTeam: redTeamContent,
+    },
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      version: '1.0.0',
+      attackId: selectedAttack.id,
+      category: selectedAttack.category,
+      newsArticlesUsed: articles.length,
+    } as any, // We'll need to update the types
+  };
+
+  const validatedContent = DailyContentSchema.parse(dailyContent);
+
+  await mkdir(contentDir, { recursive: true });
+  await writeFile(filePath, JSON.stringify(validatedContent, null, 2), 'utf-8');
+  
+  // Update history
+  await historyTracker.addAttackId(selectedAttack.id);
+  
+  spinner.succeed('Content generated successfully!');
+  console.log(chalk.green(`📅 ${currentDate} - ${selectedAttack.name}`));
+  console.log(chalk.green(`📊 Total attacks covered: ${historyTracker.getGenerationCount()}/${getDatabaseSize()}`));
+}
