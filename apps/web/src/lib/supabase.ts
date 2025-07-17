@@ -72,7 +72,7 @@ export async function storeContentInSupabase(content: any): Promise<void> {
 }
 
 export async function getContentByDate(date: string): Promise<DailyContent | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('daily_content')
     .select('*')
     .eq('date', date)
@@ -89,7 +89,7 @@ export async function getContentByDate(date: string): Promise<DailyContent | nul
 }
 
 export async function getAllContent(limit = 50): Promise<DailyContent[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('daily_content')
     .select('*')
     .order('date', { ascending: false })
@@ -103,7 +103,7 @@ export async function getAllContent(limit = 50): Promise<DailyContent[]> {
 }
 
 export async function getContentArchive(): Promise<{ date: string; attack_type: string }[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('daily_content')
     .select('date, attack_type')
     .order('date', { ascending: false })
