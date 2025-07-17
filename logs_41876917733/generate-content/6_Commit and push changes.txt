@@ -1,0 +1,25 @@
+﻿2025-07-17T09:46:33.6673746Z ##[group]Run git config --global user.name "GitHub Actions Bot"
+2025-07-17T09:46:33.6674256Z [36;1mgit config --global user.name "GitHub Actions Bot"[0m
+2025-07-17T09:46:33.6674641Z [36;1mgit config --global user.email "actions@github.com"[0m
+2025-07-17T09:46:33.6674950Z [36;1mgit add content/[0m
+2025-07-17T09:46:33.6675167Z [36;1m[0m
+2025-07-17T09:46:33.6675381Z [36;1m# Check if there are changes to commit[0m
+2025-07-17T09:46:33.6675680Z [36;1mif ! git diff --staged --quiet; then[0m
+2025-07-17T09:46:33.6676052Z [36;1m  git commit -m "chore: Generate daily content for $(date +'%Y-%m-%d')"[0m
+2025-07-17T09:46:33.6676433Z [36;1m  git push[0m
+2025-07-17T09:46:33.6676638Z [36;1melse[0m
+2025-07-17T09:46:33.6676886Z [36;1m  echo "No new content generated. Nothing to commit."[0m
+2025-07-17T09:46:33.6677179Z [36;1mfi[0m
+2025-07-17T09:46:33.6705691Z shell: /usr/bin/bash -e {0}
+2025-07-17T09:46:33.6705960Z ##[endgroup]
+2025-07-17T09:46:33.7422951Z [main e518e2e] chore: Generate daily content for 2025-07-17
+2025-07-17T09:46:33.7423888Z  1 file changed, 16 insertions(+), 16 deletions(-)
+2025-07-17T09:46:34.1156643Z To https://github.com/pentoshi007/oh-my-security
+2025-07-17T09:46:34.1157450Z  ! [rejected]        main -> main (fetch first)
+2025-07-17T09:46:34.1158378Z error: failed to push some refs to 'https://github.com/pentoshi007/oh-my-security'
+2025-07-17T09:46:34.1174774Z hint: Updates were rejected because the remote contains work that you do not
+2025-07-17T09:46:34.1176082Z hint: have locally. This is usually caused by another repository pushing to
+2025-07-17T09:46:34.1177139Z hint: the same ref. If you want to integrate the remote changes, use
+2025-07-17T09:46:34.1177890Z hint: 'git pull' before pushing again.
+2025-07-17T09:46:34.1178734Z hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+2025-07-17T09:46:34.1190426Z ##[error]Process completed with exit code 1.

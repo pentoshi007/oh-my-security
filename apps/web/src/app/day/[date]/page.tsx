@@ -18,7 +18,8 @@ export async function generateStaticParams() {
 }
 
 export default async function DayPage({ params }: DayPageProps) {
-  const content = getContentByDate(params.date)
+  const { date } = await params
+  const content = getContentByDate(date)
 
   if (!content) {
     notFound()
