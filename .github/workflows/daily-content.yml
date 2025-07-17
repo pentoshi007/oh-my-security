@@ -41,9 +41,10 @@ jobs:
 
           # Check if there are changes to commit
           if ! git diff --staged --quiet; then
-            git commit -m "chore: Generate daily content for $(date +'%Y-%m-%d')"
-            git pull --rebase origin main
-            git push origin main
+            timestamp=$(date -u)
+            git commit -m "chore: Generate daily content for ${timestamp}"
+            git pull
+            git push
           else
             echo "No new content generated. Nothing to commit."
           fi
