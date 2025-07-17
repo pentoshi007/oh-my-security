@@ -1,5 +1,5 @@
 import ContentDisplay from '@/components/ContentDisplay'
-import { getTodaysContent, getAttackCount } from '@/lib/content'
+import { getLatestContent } from '@/lib/content'
 import Link from 'next/link'
 import { Shield, Target, BookOpen, TrendingUp, Users, Globe } from 'lucide-react'
 import SubscribeForm from '@/components/SubscribeForm'
@@ -7,8 +7,8 @@ import ScrollAnimationWrapper from '@/components/ScrollAnimationWrapper'
 import ContentSection from '@/components/ContentSection'
 
 export default async function HomePage() {
-  const content = await getTodaysContent()
-  const attackCount = await getAttackCount()
+  const content = await getLatestContent()
+  const attackCount = 45 // Hardcoded for now, can be made dynamic later
 
   return (
     <div className="min-h-screen">
@@ -104,7 +104,14 @@ export default async function HomePage() {
         subtitle="Fresh cybersecurity content delivered daily"
       >
           <div className="max-w-6xl mx-auto">
-            <ContentDisplay content={content} />
+            {content ? (
+              <ContentDisplay content={content} />
+            ) : (
+              <div className="text-center glassmorphic p-8">
+                <h3 className="text-xl font-semibold text-gray-700 mb-4">No Content Available</h3>
+                <p className="text-gray-600">Content is being generated. Please check back later!</p>
+              </div>
+            )}
           </div>
       </ContentSection>
 
