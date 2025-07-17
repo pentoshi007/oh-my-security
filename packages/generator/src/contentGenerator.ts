@@ -8,8 +8,16 @@ import dotenv from 'dotenv';
 
 import { NewsAPIService } from './newsapi.js';
 import { AIContentGenerator } from './ai.js';
-import { getCurrentDate, detectAttackType } from './utils.js';
+import { getCurrentDate } from './utils.js';
 import { DailyContentSchema, type DailyContent } from './types.js';
+import { 
+  getDatabaseSize, 
+  getNextAttack, 
+  shouldDiscoverNewAttacks, 
+  addNewAttacks 
+} from './attackDatabase.js';
+import { HistoryTracker } from './historyTracker.js';
+import { AttackDiscoveryService } from './attackDiscovery.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,31 +38,91 @@ export async function generateAndSaveContent(spinner: Ora) {
 
   const newsService = new NewsAPIService(newsApiKey);
   const aiService = new AIContentGenerator(googleApiKey);
+  const historyTracker = new HistoryTracker();
 
-  spinner.start('Fetching cybersecurity news...');
-  const articles = await newsService.fetchCybersecurityNews();
-  const bestArticle = newsService.selectBestArticle(articles);
-  spinner.succeed('News fetched');
+  // Load history
+  spinner.start('Loading generation history...');
+  await historyTracker.load();
+  const recentAttackIds = historyTracker.getRecentAttackIds();
+  spinner.succeed('History loaded');
 
-  const attackType = detectAttackType(bestArticle.title, bestArticle.description || '');
-  const articleSummary = bestArticle.description || bestArticle.title;
+  // Check if we should discover new attacks
+  if (shouldDiscoverNewAttacks(recentAttackIds)) {
+    spinner.start('Looking for new attack methodologies...');
+    const attackDiscovery = new AttackDiscoveryService(newsApiKey);
+    
+    try {
+      const discoveries = await attackDiscovery.discoverNewAttacks();
+      if (discoveries.length > 0) {
+        const newAttacks = discoveries.map(d => attackDiscovery.convertToAttackMethodology(d));
+        const addedCount = addNewAttacks(newAttacks);
+        
+        if (addedCount > 0) {
+          spinner.succeed(`Discovered and added ${addedCount} new attack methodologies!`);
+          console.log(chalk.green('🔍 New attacks added to database:'));
+          newAttacks.slice(0, addedCount).forEach(attack => {
+            console.log(chalk.green(`  • ${attack.name} (${attack.category})`));
+          });
+        } else {
+          spinner.succeed('No new attack methodologies found');
+        }
+      } else {
+        spinner.succeed('No new attack methodologies discovered');
+      }
+    } catch (error) {
+      spinner.warn('Failed to discover new attacks, continuing with existing database');
+      console.log(chalk.yellow('Will continue with existing attack methodologies'));
+    }
+  }
 
-  spinner.start('Generating content...');
+  // Select next attack methodology
+  spinner.start('Selecting attack methodology...');
+  const selectedAttack = getNextAttack(recentAttackIds);
+  spinner.succeed(`Selected: ${selectedAttack.name}`);
+  console.log(chalk.blue(`📚 Category: ${selectedAttack.category}`));
+  console.log(chalk.blue(`🎯 Difficulty: ${selectedAttack.difficulty}`));
+
+  // Fetch news articles for this specific attack
+  spinner.start(`Searching for news about ${selectedAttack.name}...`);
+  const articles = await newsService.fetchNewsForAttack(selectedAttack);
+  
+  if (articles.length === 0) {
+    spinner.warn('No recent news found for this attack type');
+    console.log(chalk.yellow('Falling back to general cybersecurity news...'));
+    // Fallback to general news if no specific articles found
+    const generalArticles = await newsService.fetchCybersecurityNews();
+    articles.push(...generalArticles.slice(0, 3));
+  }
+  spinner.succeed(`Found ${articles.length} relevant articles`);
+
+  // Display the top news article
+  if (articles.length > 0) {
+    console.log(chalk.gray(`📰 Top article: "${articles[0].title}" - ${articles[0].source.name}`));
+  }
+
+  // Generate content using the attack methodology and news context
+  spinner.start('Generating educational content...');
   const [blueTeamContent, redTeamContent] = await Promise.all([
-    aiService.generateBlueTeamContent(attackType, articleSummary),
-    aiService.generateRedTeamContent(attackType, articleSummary),
+    aiService.generateBlueTeamContent(selectedAttack, articles),
+    aiService.generateRedTeamContent(selectedAttack, articles),
   ]);
 
   const currentDate = getCurrentDate();
   const dailyContent: DailyContent = {
     date: currentDate,
-    attackType,
-    article: {
-      title: bestArticle.title,
-      url: bestArticle.url,
-      source: bestArticle.source.name,
-      publishedAt: bestArticle.publishedAt,
-      summary: articleSummary,
+    attackType: selectedAttack.name as any, // We'll need to update the types
+    article: articles.length > 0 ? {
+      title: articles[0].title,
+      url: articles[0].url,
+      source: articles[0].source.name,
+      publishedAt: articles[0].publishedAt,
+      summary: articles[0].description || articles[0].title,
+    } : {
+      title: `Educational Content: ${selectedAttack.name}`,
+      url: 'https://oh-my-security.com',
+      source: 'Oh-My-Security',
+      publishedAt: new Date().toISOString(),
+      summary: selectedAttack.description,
     },
     content: {
       blueTeam: blueTeamContent,
@@ -63,7 +131,10 @@ export async function generateAndSaveContent(spinner: Ora) {
     metadata: {
       generatedAt: new Date().toISOString(),
       version: '1.0.0',
-    },
+      attackId: selectedAttack.id,
+      category: selectedAttack.category,
+      newsArticlesUsed: articles.length,
+    } as any, // We'll need to update the types
   };
 
   const validatedContent = DailyContentSchema.parse(dailyContent);
@@ -73,6 +144,10 @@ export async function generateAndSaveContent(spinner: Ora) {
   const filePath = join(contentDir, `${currentDate}.json`);
   await writeFile(filePath, JSON.stringify(validatedContent, null, 2), 'utf-8');
   
+  // Update history
+  await historyTracker.addAttackId(selectedAttack.id);
+  
   spinner.succeed('Content generated successfully!');
-  console.log(chalk.green(`📅 ${currentDate} - ${attackType}`));
+  console.log(chalk.green(`📅 ${currentDate} - ${selectedAttack.name}`));
+  console.log(chalk.green(`📊 Total attacks covered: ${historyTracker.getGenerationCount()}/${getDatabaseSize()}`));
 } 

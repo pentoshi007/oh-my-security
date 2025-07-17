@@ -12,6 +12,7 @@
     "daisyui": "^4.12.0",
     "framer-motion": "^11.2.10",
     "lucide-react": "^0.427.0",
+    "mongodb": "^6.17.0",
     "next": "^15.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -55,4 +55,26 @@ h1, h2, h3, h4, h5, h6 {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+.glassmorphism-dark {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    color: #e5e7eb;
+    /* Tailwind gray-200 for text */
+}
+
+.glassmorphism-footer {
+    background: rgba(243, 244, 246, 0.6);
+    /* gray-100 with opacity */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
+    color: #374151;
+    /* gray-700 */
 }

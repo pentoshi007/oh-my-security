@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import type { AttackType, BlueTeamContent, RedTeamContent } from './types.js';
+import type { AttackMethodology } from './attackDatabase.js';
+import type { NewsAPIArticle } from './types.js';
 
 export class AIContentGenerator {
   private genAI: GoogleGenerativeAI;
@@ -9,57 +11,77 @@ export class AIContentGenerator {
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
-  async generateBlueTeamContent(attackType: AttackType, articleSummary: string): Promise<BlueTeamContent> {
+  async generateBlueTeamContent(attack: AttackMethodology, newsArticles: NewsAPIArticle[]): Promise<BlueTeamContent> {
+    // Create a news context summary from the articles
+    const newsContext = this.createNewsContext(newsArticles);
+    
     const prompt = `You are a senior cybersecurity analyst writing educational content for 'Oh-My-Security'.
-Your task is to generate a detailed, structured, and professional analysis for the attack type: "${attackType}".
-Use the following news context: "${articleSummary}".
+Your task is to generate a detailed, structured, and professional analysis for the attack type: "${attack.name}".
+
+Attack Description: ${attack.description}
+Attack Category: ${attack.category}
+Known Impacts: ${attack.impacts.join(', ')}
+
+Recent Real-World Examples from News:
+${newsContext}
 
 IMPORTANT:
 - Your response must begin DIRECTLY with "ABOUT SECTION:". Do not add any preamble.
 - Follow the specified format exactly. Do not add extra markdown like asterisks to the section titles.
+- Reference the real-world examples from the news articles provided when relevant.
 
 Format:
 
 ABOUT SECTION:
-[Detailed explanation of what the attack is, its importance, threat landscape, and economic impact. Minimum 200 words.]
+[Detailed explanation of what the attack is, its importance, threat landscape, and economic impact. Reference recent incidents from the news articles. Minimum 200 words.]
 
 HOW IT WORKS SECTION:
-Provide a detailed technical breakdown of how the attack works, including phases like initial access, persistence, lateral movement, objective execution, and cleanup. Use numbered lists or clear paragraphs.
+Provide a detailed technical breakdown of how the attack works, including phases like initial access, persistence, lateral movement, objective execution, and cleanup. Use numbered lists or clear paragraphs. When possible, reference how the attacks in the news articles were conducted.
 
 IMPACT SECTION:
-Provide a detailed impact analysis, covering financial, operational, and strategic/reputational consequences.`;
+Provide a detailed impact analysis, covering financial, operational, and strategic/reputational consequences. Include specific examples from the news articles about real-world impacts.`;
 
     try {
       const content = await this.generateContent(prompt);
       console.log('✅ AI Blue Team Success (Google Gemini)');
-      return this.parseBlueTeamContent(content, attackType);
+      return this.parseBlueTeamContent(content, attack.name as AttackType);
     } catch (error) {
       console.log('❌ AI Blue Team Error (Google Gemini):', error instanceof Error ? error.message : 'Unknown error');
-      return this.getFallbackBlueTeamContent(attackType);
+      return this.getFallbackBlueTeamContent(attack.name as AttackType);
     }
   }
 
-  async generateRedTeamContent(attackType: AttackType, articleSummary: string): Promise<RedTeamContent> {
+  async generateRedTeamContent(attack: AttackMethodology, newsArticles: NewsAPIArticle[]): Promise<RedTeamContent> {
+    // Create a news context summary from the articles
+    const newsContext = this.createNewsContext(newsArticles);
+    
     const prompt = `You are a senior red team operator writing educational content for 'Oh-My-Security'.
-Your task is to generate a detailed, structured, and professional analysis of offensive techniques for the attack type: "${attackType}".
-Use the following news context: "${articleSummary}".
+Your task is to generate a detailed, structured, and professional analysis of offensive techniques for the attack type: "${attack.name}".
+
+Attack Description: ${attack.description}
+Attack Category: ${attack.category}
+Attack Difficulty: ${attack.difficulty}
+
+Recent Real-World Examples from News:
+${newsContext}
 
 IMPORTANT:
 - Your response must begin DIRECTLY with "OBJECTIVES SECTION:". Do not add any preamble.
 - Follow the specified format exactly. Do not add extra markdown like asterisks to the section titles.
 - For the EXPLOIT CODE SECTION, provide functional, commented, educational code examples.
+- Reference the real-world attack methods from the news when relevant.
 
 Format:
 
 OBJECTIVES SECTION:
-[Detailed explanation of strategic goals. Minimum 200 words.]
+[Detailed explanation of strategic goals. Reference what attackers achieved in the real-world examples. Minimum 200 words.]
 
 METHODOLOGY SECTION:
-[Provide a detailed, multi-phase attack methodology from reconnaissance to cleanup, focusing on offensive techniques.]
+[Provide a detailed, multi-phase attack methodology from reconnaissance to cleanup, focusing on offensive techniques. Include insights from how the attacks in the news were conducted.]
 
 EXPLOIT CODE SECTION:
 [Provide educational, functional code examples for demonstrating the attack, with comments. For example:
-# ${attackType} Educational Simulation Framework
+# ${attack.name} Educational Simulation Framework
 # WARNING: For authorized educational and testing purposes only
 ...
 ]`;
@@ -67,12 +89,32 @@ EXPLOIT CODE SECTION:
     try {
       const content = await this.generateContent(prompt);
       console.log('✅ AI Red Team Success (Google Gemini)');
-      return this.parseRedTeamContent(content, attackType);
+      return this.parseRedTeamContent(content, attack.name as AttackType);
     } catch (error) {
       console.log('❌ AI Red Team Error (Google Gemini):', error instanceof Error ? error.message : 'Unknown error');
-      return this.getFallbackRedTeamContent(attackType);
+      return this.getFallbackRedTeamContent(attack.name as AttackType);
     }
   }
+
+  /**
+   * Create a news context summary from articles
+   */
+  private createNewsContext(articles: NewsAPIArticle[]): string {
+    if (articles.length === 0) {
+      return 'No recent news articles found for this attack type.';
+    }
+
+    // Take top 3 most relevant articles
+    const topArticles = articles.slice(0, 3);
+    
+    return topArticles.map((article, index) => {
+      const date = new Date(article.publishedAt).toLocaleDateString();
+      return `${index + 1}. "${article.title}" - ${article.source.name} (${date})
+   Summary: ${article.description}`;
+    }).join('\n\n');
+  }
+
+
 
   private async generateContent(prompt: string): Promise<string> {
     try {

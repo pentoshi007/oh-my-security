@@ -35,33 +35,36 @@ export default function ContentTabs({ blueTeam, redTeam }: ContentTabsProps) {
   return (
     <div>
       {/* Tab Buttons */}
-      <div className="flex items-center justify-center border-b border-gray-200">
-        <div className="flex items-center gap-2 sm:gap-4 -mb-px">
-          {tabs.map((tab, index) => {
-            const isActive = activeTab === index
-            return (
-              <button
-                key={tab.title}
-                onClick={() => setActiveTab(index)}
-                className={`relative px-3 sm:px-4 py-3 text-sm sm:text-base font-medium transition-colors focus:outline-none ${
-                  isActive ? 'text-black' : 'text-gray-500 hover:text-gray-800'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`transition-colors ${isActive ? (isBlueActive ? 'text-blue-500' : 'text-red-500') : 'text-gray-400'}`}>
-                    {tab.icon}
-                  </span>
-                  {tab.title}
-                </div>
-                {isActive && (
-                  <motion.div
-                    layoutId="active-tab-indicator"
-                    className={`absolute bottom-0 left-0 right-0 h-0.5 ${isBlueActive ? 'bg-blue-500' : 'bg-red-500'}`}
-                  />
-                )}
-              </button>
-            )
-          })}
+      <div className="border-b border-gray-200">
+        <div className="max-w-full overflow-x-auto">
+          <div className="flex items-center justify-start md:justify-center gap-2 sm:gap-4 -mb-px px-4">
+            {tabs.map((tab, index) => {
+              const isActive = activeTab === index
+              return (
+                <button
+                  key={tab.title}
+                  onClick={() => setActiveTab(index)}
+                  className={`relative px-3 sm:px-4 py-3 text-sm sm:text-base font-medium transition-colors focus:outline-none ${isActive
+                      ? (isBlueActive ? 'text-blue-600' : 'text-red-600')
+                      : 'text-gray-500 hover:text-black'
+                    }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`transition-colors ${isActive ? (isBlueActive ? 'text-blue-500' : 'text-red-500') : 'text-gray-400'}`}>
+                      {tab.icon}
+                    </span>
+                    {tab.title}
+                  </div>
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-tab-indicator"
+                      className={`absolute bottom-0 left-0 right-0 h-0.5 ${isBlueActive ? 'bg-blue-500' : 'bg-red-500'}`}
+                    />
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 
@@ -74,18 +77,17 @@ export default function ContentTabs({ blueTeam, redTeam }: ContentTabsProps) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={`p-6 sm:p-8 rounded-xl transition-colors ${
-              isBlueActive 
-                ? 'bg-blue-500/5' 
-                : 'bg-red-500/5'
-            }`}
+            className={`p-6 sm:p-8 rounded-2xl transition-colors backdrop-blur-lg border ${isBlueActive
+              ? 'bg-blue-500/10 border-blue-500/20'
+              : 'bg-red-500/10 border-red-500/20'
+              }`}
           >
             {tabs[activeTab].title === 'Exploit Code' ? (
-              <div className="bg-gray-900 text-sm text-green-400 p-4 rounded-xl overflow-x-auto font-mono">
+              <div className="bg-gray-900/80 text-sm text-green-400 p-4 rounded-xl overflow-x-auto font-mono backdrop-blur-sm border border-gray-500/20">
                 <pre><code>{tabs[activeTab].content}</code></pre>
               </div>
             ) : (
-              <div className="prose prose-lg max-w-none">
+              <div className="prose prose-lg max-w-5xl mx-auto prose-gray prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-li:text-gray-800">
                 {formatContent(tabs[activeTab].content)}
               </div>
             )}

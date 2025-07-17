@@ -7,6 +7,20 @@ interface ContentDisplayProps {
 }
 
 export default function ContentDisplay({ content }: ContentDisplayProps) {
+  // Early return if content is not loaded
+  if (!content || !content.content) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <div className="animate-pulse">
+            <div className="h-12 bg-gray-200 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
     return date.toLocaleDateString('en-US', {
@@ -17,20 +31,20 @@ export default function ContentDisplay({ content }: ContentDisplayProps) {
     })
   }
 
-  const blueTeamTabs = content.content.blueTeam ? [
+  const blueTeamTabs = content.content?.blueTeam ? [
     { title: 'About', content: content.content.blueTeam.about, icon: <Info /> },
     { title: 'How it Works', content: content.content.blueTeam.howItWorks, icon: <ChevronsRight /> },
     { title: 'Impact', content: content.content.blueTeam.impact, icon: <AlertTriangle /> }
   ] : []
 
-  const redTeamTabs = content.content.redTeam ? [
+  const redTeamTabs = content.content?.redTeam ? [
     { title: 'Objectives', content: content.content.redTeam.objectives, icon: <Target /> },
     { title: 'Methodology', content: content.content.redTeam.methodology, icon: <Shield /> },
     { title: 'Exploit Code', content: content.content.redTeam.exploitCode || 'No exploit code available.', icon: <Code /> }
   ] : []
   
   return (
-    <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+    <div className="py-8">
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tighter leading-tight">
@@ -43,7 +57,8 @@ export default function ContentDisplay({ content }: ContentDisplayProps) {
       </div>
         
       {/* Article Reference */}
-      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-12 shadow-sm">
+      {content.article && (
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-12 shadow-sm max-w-5xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-3 tracking-tight">
           In the News
         </h2>
@@ -61,9 +76,12 @@ export default function ContentDisplay({ content }: ContentDisplayProps) {
           </a>
         </div>
       </div>
+      )}
 
       {/* Interactive Content Tabs */}
+      <div className="glassmorphism rounded-2xl p-4 sm:p-6 md:p-8">
       <ContentTabs blueTeam={blueTeamTabs} redTeam={redTeamTabs} />
+      </div>
     </div>
   )
 } 

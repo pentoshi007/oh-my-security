@@ -21,6 +21,9 @@ export interface Article {
 export interface ContentMetadata {
   generatedAt: string;
   version: string;
+  attackId?: string;
+  category?: string;
+  newsArticlesUsed?: number;
 }
 
 export interface DailyContent {

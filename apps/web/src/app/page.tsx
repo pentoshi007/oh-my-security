@@ -1,12 +1,14 @@
 import ContentDisplay from '@/components/ContentDisplay'
-import { getTodaysContent } from '@/lib/content'
+import { getTodaysContent, getAttackCount } from '@/lib/content'
 import Link from 'next/link'
 import { Shield, Target, BookOpen, TrendingUp, Users, Globe } from 'lucide-react'
 import SubscribeForm from '@/components/SubscribeForm'
 import ScrollAnimationWrapper from '@/components/ScrollAnimationWrapper'
+import ContentSection from '@/components/ContentSection'
 
 export default async function HomePage() {
   const content = await getTodaysContent()
+  const attackCount = await getAttackCount()
 
   return (
     <div className="min-h-screen">
@@ -21,15 +23,15 @@ export default async function HomePage() {
           </ScrollAnimationWrapper>
           
           <ScrollAnimationWrapper delay={0.1}>
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Master Cybersecurity
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Learn Cybersecurity
               <span className="text-blue-600"> One Day </span>
               at a Time
             </h1>
           </ScrollAnimationWrapper>
           
           <ScrollAnimationWrapper delay={0.2}>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
               Learn from real-world cyber attacks with daily content covering both defensive (blue team) 
               and offensive (red team) perspectives. Stay ahead of the latest threats.
             </p>
@@ -37,10 +39,10 @@ export default async function HomePage() {
           
           <ScrollAnimationWrapper delay={0.3}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link href="#today" className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              <Link href="#today" className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 transform hover:scale-105">
                 Start Learning Today
               </Link>
-              <Link href="/about" className="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:border-gray-400 transition-colors">
+              <Link href="/about" className="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:border-gray-400 transition-all duration-200 transform hover:scale-105">
                 Learn More
               </Link>
             </div>
@@ -50,16 +52,16 @@ export default async function HomePage() {
 
       {/* Features Section */}
       <ScrollAnimationWrapper>
-        <section className="py-16 px-6 bg-gray-50/50">
+        <section className="py-16 px-6 glassmorphism rounded-2xl">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Oh-My-Security?</h2>
+            <div className="text-center mb-12 sm:mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Why Oh-My-Security?</h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Professional cybersecurity education designed for modern security practitioners
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-8 md:gap-12">
               <div className="text-center p-6">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                   <Shield className="w-6 h-6 text-blue-600" />
@@ -95,31 +97,27 @@ export default async function HomePage() {
       </ScrollAnimationWrapper>
 
       {/* Today's Content Section */}
-      <ScrollAnimationWrapper>
-        <section id="today" className="py-16 px-6">
+      <ContentSection
+        id="today"
+        className="py-16 px-6"
+        title="Today's Learning Topic"
+        subtitle="Fresh cybersecurity content delivered daily"
+      >
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Today's Learning Topic</h2>
-              <p className="text-lg text-gray-600">
-                Fresh cybersecurity content delivered daily
-              </p>
-            </div>
-            
             <ContentDisplay content={content} />
           </div>
-        </section>
-      </ScrollAnimationWrapper>
+      </ContentSection>
 
       {/* Stats Section */}
       <ScrollAnimationWrapper>
-        <section className="py-16 px-6 bg-gray-50/50">
+        <section className="py-16 px-6 glassmorphism rounded-2xl">
           <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 md:gap-8 text-center">
               <div>
                 <div className="flex items-center justify-center mb-2">
                   <TrendingUp className="w-8 h-8 text-blue-600" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">25+</div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{attackCount}+</div>
                 <div className="text-gray-600">Attack Types Covered</div>
               </div>
               
