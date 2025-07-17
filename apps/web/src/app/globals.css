@@ -11,15 +11,42 @@ body {
     /* A light gray as a fallback */
     background-image: radial-gradient(circle at 1px 1px, #d1d5db 1px, transparent 0);
     background-size: 2rem 2rem;
+    /* Mobile optimizations */
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
     @apply font-bold;
+    /* Better line-height for mobile readability */
+    line-height: 1.2;
 }
 
 @layer base {
     body {
         @apply bg-white text-gray-800;
+    }
+    
+    /* Mobile-friendly focus styles */
+    *:focus-visible {
+        @apply outline-2 outline-blue-500 outline-offset-2;
+    }
+    
+    /* Better touch targets for mobile */
+    button, a, input, select, textarea {
+        min-height: 44px; /* Apple's recommended minimum touch target */
+        min-width: 44px;
+    }
+    
+    /* Improve readability on mobile */
+    p, li {
+        line-height: 1.6;
+    }
+    
+    /* Mobile-friendly form elements */
+    input, select, textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
     }
 }
 
@@ -27,27 +54,80 @@ h1, h2, h3, h4, h5, h6 {
     .section-heading {
         @apply text-2xl font-bold mb-4;
     }
+    
+    /* Mobile-optimized text classes */
+    .text-mobile-xs { font-size: 0.75rem; }
+    .text-mobile-sm { font-size: 0.875rem; }
+    .text-mobile-base { font-size: 1rem; }
+    .text-mobile-lg { font-size: 1.125rem; }
+    .text-mobile-xl { font-size: 1.25rem; }
+    
+    /* Improved touch targets */
+    .touch-target {
+        min-height: 48px;
+        min-width: 48px;
+        @apply flex items-center justify-center;
+    }
+    
+    /* Mobile-friendly cards */
+    .mobile-card {
+        @apply p-4 rounded-xl border border-gray-200 bg-white shadow-sm;
+        transition: all 0.2s ease;
+    }
+    
+    .mobile-card:active {
+        transform: scale(0.98);
+        @apply shadow-md;
+    }
+    
+    /* Line clamping utilities */
+    .line-clamp-1 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+    }
+    
+    .line-clamp-2 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    
+    .line-clamp-3 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+    }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Mobile optimized */
 ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
     background: #f1f5f9;
-    /* light grey track */
+    border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    /* medium grey thumb */
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
-    /* darker grey on hover */
+}
+
+/* Mobile-specific scrollbar for horizontal scrolling */
+@media (max-width: 640px) {
+    ::-webkit-scrollbar {
+        height: 4px;
+    }
 }
 
 .glassmorphism {
@@ -77,4 +157,51 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.05);
     color: #374151;
     /* gray-700 */
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+    /* Reduce motion for better performance on mobile */
+    .glassmorphism {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    
+    /* Better spacing for mobile */
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    /* Improved button spacing */
+    .btn-mobile {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        line-height: 1.25;
+    }
+    
+    /* Safe area for notched devices */
+    .safe-top {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* Dark mode support with proper mobile considerations */
+@media (prefers-color-scheme: dark) {
+    html {
+        color-scheme: dark;
+    }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

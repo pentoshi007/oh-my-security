@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import "./globals.css";
 
@@ -10,6 +10,18 @@ const sora = Sora({
   weight: ['400', '600', '700'],
   display: 'swap',
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
+  colorScheme: 'light dark',
+}
 
 export const metadata: Metadata = {
   title: {
@@ -102,7 +114,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={sora.className}>
-      <body className="bg-white text-gray-800">
+      <body className="bg-white text-gray-800 antialiased">
         <Header />
         <main className="min-h-[calc(100vh-4rem-1px)]">
           {children}
