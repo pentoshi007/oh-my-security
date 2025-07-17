@@ -1,0 +1,31 @@
+﻿2025-07-17T09:45:47.6747682Z ##[group]Run npm run generate --prefix packages/generator
+2025-07-17T09:45:47.6748160Z [36;1mnpm run generate --prefix packages/generator[0m
+2025-07-17T09:45:47.6776317Z shell: /usr/bin/bash -e {0}
+2025-07-17T09:45:47.6776573Z env:
+2025-07-17T09:45:47.6776923Z   NEWS_API_KEY: ***
+2025-07-17T09:45:47.6777227Z   GOOGLE_API_KEY: ***
+2025-07-17T09:45:47.6777432Z ##[endgroup]
+2025-07-17T09:45:47.7880564Z 
+2025-07-17T09:45:47.7881348Z > @oms/generator@1.0.0 generate
+2025-07-17T09:45:47.7882227Z > tsx src/index.ts
+2025-07-17T09:45:47.7882483Z 
+2025-07-17T09:45:48.3465240Z Oh-My-Security Content Generator
+2025-07-17T09:45:48.3592287Z - Initializing...
+2025-07-17T09:45:48.3598121Z - Loading generation history...
+2025-07-17T09:45:48.3621639Z No history file found, starting fresh
+2025-07-17T09:45:48.3629581Z ✔ History loaded
+2025-07-17T09:45:48.3630116Z - Selecting attack methodology...
+2025-07-17T09:45:48.3759400Z ✔ Selected: Bluetooth Attacks
+2025-07-17T09:45:48.3760041Z 📚 Category: Wireless Attacks
+2025-07-17T09:45:48.3760939Z 🎯 Difficulty: Medium
+2025-07-17T09:45:48.3762023Z - Searching for news about Bluetooth Attacks...
+2025-07-17T09:45:48.6462818Z ⚠ No recent news found for this attack type
+2025-07-17T09:45:48.6463675Z Falling back to general cybersecurity news...
+2025-07-17T09:45:48.7061303Z ✔ Found 3 relevant articles
+2025-07-17T09:45:48.7062683Z 📰 Top article: "China's New Internet Law Raises Privacy Fears for 1 Billion Users" - Newsweek
+2025-07-17T09:45:48.7064040Z - Generating educational content...
+2025-07-17T09:46:13.0319892Z ✅ AI Blue Team Success (Google Gemini)
+2025-07-17T09:46:33.6428402Z ✅ AI Red Team Success (Google Gemini)
+2025-07-17T09:46:33.6469982Z ✔ Content generated successfully!
+2025-07-17T09:46:33.6470729Z 📅 2025-07-17 - Bluetooth Attacks
+2025-07-17T09:46:33.6471324Z 📊 Total attacks covered: 1/32

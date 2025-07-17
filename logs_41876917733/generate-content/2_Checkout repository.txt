@@ -1,0 +1,69 @@
+﻿2025-07-17T09:45:29.7314864Z ##[group]Run actions/checkout@v4
+2025-07-17T09:45:29.7315852Z with:
+2025-07-17T09:45:29.7316392Z   repository: pentoshi007/oh-my-security
+2025-07-17T09:45:29.7317281Z   token: ***
+2025-07-17T09:45:29.7317778Z   ssh-strict: true
+2025-07-17T09:45:29.7318246Z   ssh-user: git
+2025-07-17T09:45:29.7318732Z   persist-credentials: true
+2025-07-17T09:45:29.7319239Z   clean: true
+2025-07-17T09:45:29.7319696Z   sparse-checkout-cone-mode: true
+2025-07-17T09:45:29.7320244Z   fetch-depth: 1
+2025-07-17T09:45:29.7320681Z   fetch-tags: false
+2025-07-17T09:45:29.7321140Z   show-progress: true
+2025-07-17T09:45:29.7321638Z   lfs: false
+2025-07-17T09:45:29.7322333Z   submodules: false
+2025-07-17T09:45:29.7322960Z   set-safe-directory: true
+2025-07-17T09:45:29.7323775Z ##[endgroup]
+2025-07-17T09:45:29.8492862Z Syncing repository: pentoshi007/oh-my-security
+2025-07-17T09:45:29.8495514Z ##[group]Getting Git version info
+2025-07-17T09:45:29.8496691Z Working directory is '/home/runner/work/oh-my-security/oh-my-security'
+2025-07-17T09:45:29.8498136Z [command]/usr/bin/git version
+2025-07-17T09:45:29.8511264Z git version 2.50.1
+2025-07-17T09:45:29.8539216Z ##[endgroup]
+2025-07-17T09:45:29.8556205Z Temporarily overriding HOME='/home/runner/work/_temp/12a3059e-0592-4ee7-af9e-707530c34000' before making global git config changes
+2025-07-17T09:45:29.8559047Z Adding repository directory to the temporary git global config as a safe directory
+2025-07-17T09:45:29.8563640Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/oh-my-security/oh-my-security
+2025-07-17T09:45:29.8603542Z Deleting the contents of '/home/runner/work/oh-my-security/oh-my-security'
+2025-07-17T09:45:29.8607045Z ##[group]Initializing the repository
+2025-07-17T09:45:29.8612388Z [command]/usr/bin/git init /home/runner/work/oh-my-security/oh-my-security
+2025-07-17T09:45:29.8676045Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-07-17T09:45:29.8677811Z hint: is subject to change. To configure the initial branch name to use in all
+2025-07-17T09:45:29.8679437Z hint: of your new repositories, which will suppress this warning, call:
+2025-07-17T09:45:29.8680863Z hint:
+2025-07-17T09:45:29.8682106Z hint: 	git config --global init.defaultBranch <name>
+2025-07-17T09:45:29.8683709Z hint:
+2025-07-17T09:45:29.8684920Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-07-17T09:45:29.8686740Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-07-17T09:45:29.8688112Z hint:
+2025-07-17T09:45:29.8688841Z hint: 	git branch -m <name>
+2025-07-17T09:45:29.8689799Z hint:
+2025-07-17T09:45:29.8691033Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-07-17T09:45:29.8693380Z Initialized empty Git repository in /home/runner/work/oh-my-security/oh-my-security/.git/
+2025-07-17T09:45:29.8696764Z [command]/usr/bin/git remote add origin https://github.com/pentoshi007/oh-my-security
+2025-07-17T09:45:29.8729982Z ##[endgroup]
+2025-07-17T09:45:29.8731376Z ##[group]Disabling automatic garbage collection
+2025-07-17T09:45:29.8735291Z [command]/usr/bin/git config --local gc.auto 0
+2025-07-17T09:45:29.8766741Z ##[endgroup]
+2025-07-17T09:45:29.8768163Z ##[group]Setting up auth
+2025-07-17T09:45:29.8774936Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-07-17T09:45:29.8808090Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-07-17T09:45:29.9087068Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-07-17T09:45:29.9118052Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-07-17T09:45:29.9352274Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-07-17T09:45:29.9388153Z ##[endgroup]
+2025-07-17T09:45:29.9389133Z ##[group]Fetching the repository
+2025-07-17T09:45:29.9397127Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e9fc23b46cacee934902993034feba47b01a4ac3:refs/remotes/origin/main
+2025-07-17T09:45:31.7755704Z From https://github.com/pentoshi007/oh-my-security
+2025-07-17T09:45:31.7757114Z  * [new ref]         e9fc23b46cacee934902993034feba47b01a4ac3 -> origin/main
+2025-07-17T09:45:31.7824283Z ##[endgroup]
+2025-07-17T09:45:31.7825103Z ##[group]Determining the checkout info
+2025-07-17T09:45:31.7826269Z ##[endgroup]
+2025-07-17T09:45:31.7832021Z [command]/usr/bin/git sparse-checkout disable
+2025-07-17T09:45:31.7882233Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-07-17T09:45:31.7914253Z ##[group]Checking out the ref
+2025-07-17T09:45:31.7918233Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-07-17T09:45:32.0643692Z Switched to a new branch 'main'
+2025-07-17T09:45:32.0644485Z branch 'main' set up to track 'origin/main'.
+2025-07-17T09:45:32.0676229Z ##[endgroup]
+2025-07-17T09:45:32.0715522Z [command]/usr/bin/git log -1 --format=%H
+2025-07-17T09:45:32.0738015Z e9fc23b46cacee934902993034feba47b01a4ac3
