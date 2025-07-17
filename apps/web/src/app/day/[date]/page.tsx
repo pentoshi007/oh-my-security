@@ -5,9 +5,9 @@ import ContentSection from '@/components/ContentSection'
 import Link from 'next/link'
 
 interface DayPageProps {
-  params: {
+  params: Promise<{
     date: string
-  }
+  }>
 }
 
 export async function generateStaticParams() {
