@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { NewsAPIResponse, NewsAPIArticle } from './types.js';
+import type { AttackMethodology } from './attackDatabase.js';
 
 export class NewsAPIService {
   private apiKey: string;
@@ -10,7 +11,107 @@ export class NewsAPIService {
   }
 
   /**
-   * Fetch the latest cybersecurity articles
+   * Fetch news articles related to a specific attack methodology
+   */
+  async fetchNewsForAttack(attack: AttackMethodology): Promise<NewsAPIArticle[]> {
+    try {
+      // Build search query from attack keywords
+      const searchTerms = [
+        ...attack.searchKeywords,
+        attack.name,
+        ...attack.aliases
+      ];
+      
+      // Create an OR query with all terms
+      const query = searchTerms.map(term => `"${term}"`).join(' OR ');
+
+      const response = await axios.get<NewsAPIResponse>(`${this.baseUrl}/everything`, {
+        params: {
+          q: query,
+          language: 'en',
+          sortBy: 'publishedAt',
+          pageSize: 20, // Get more articles to find relevant ones
+          from: this.getDateDaysAgo(7), // Look for articles from last 7 days
+        },
+        headers: {
+          'X-API-Key': this.apiKey,
+        },
+      });
+
+      if (response.data.status !== 'ok') {
+        throw new Error(`NewsAPI error: ${response.data.status}`);
+      }
+
+      // Filter and score articles for relevance
+      const scoredArticles = response.data.articles
+        .filter(article => 
+          article.title && 
+          article.description && 
+          article.url &&
+          !article.title.includes('[Removed]') &&
+          !article.description.includes('[Removed]')
+        )
+        .map(article => {
+          const score = this.scoreArticleRelevance(article, attack);
+          return { article, score };
+        })
+        .filter(item => item.score > 0) // Only keep relevant articles
+        .sort((a, b) => b.score - a.score); // Sort by relevance
+
+      return scoredArticles.map(item => item.article);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(`Failed to fetch news: ${error.response?.data?.message || error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Score article relevance to the attack methodology
+   */
+  private scoreArticleRelevance(article: NewsAPIArticle, attack: AttackMethodology): number {
+    let score = 0;
+    const titleLower = article.title.toLowerCase();
+    const descLower = (article.description || '').toLowerCase();
+    const contentLower = (article.content || '').toLowerCase();
+    
+    // Check for exact attack name or aliases
+    if (titleLower.includes(attack.name.toLowerCase())) score += 5;
+    if (descLower.includes(attack.name.toLowerCase())) score += 3;
+    
+    attack.aliases.forEach(alias => {
+      if (titleLower.includes(alias.toLowerCase())) score += 4;
+      if (descLower.includes(alias.toLowerCase())) score += 2;
+    });
+    
+    // Check for search keywords
+    attack.searchKeywords.forEach(keyword => {
+      if (titleLower.includes(keyword.toLowerCase())) score += 3;
+      if (descLower.includes(keyword.toLowerCase())) score += 2;
+      if (contentLower.includes(keyword.toLowerCase())) score += 1;
+    });
+    
+    // Boost score for recent articles
+    const articleDate = new Date(article.publishedAt);
+    const daysSincePublished = (Date.now() - articleDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSincePublished < 1) score += 3;
+    else if (daysSincePublished < 3) score += 2;
+    else if (daysSincePublished < 7) score += 1;
+    
+    // Boost for reputable sources
+    const reputableSources = ['reuters', 'bbc', 'cnn', 'techcrunch', 'wired', 'ars technica', 'zdnet', 'bleeping computer', 'the hacker news'];
+    if (reputableSources.some(source => 
+      article.source.name.toLowerCase().includes(source)
+    )) {
+      score += 2;
+    }
+    
+    return score;
+  }
+
+  /**
+   * Fetch the latest cybersecurity articles (legacy method)
    */
   async fetchCybersecurityNews(): Promise<NewsAPIArticle[]> {
     try {
@@ -54,6 +155,15 @@ export class NewsAPIService {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     return yesterday.toISOString().split('T')[0];
+  }
+
+  /**
+   * Get date from N days ago in ISO format
+   */
+  private getDateDaysAgo(days: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    return date.toISOString().split('T')[0];
   }
 
   /**

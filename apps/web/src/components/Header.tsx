@@ -1,11 +1,32 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Shield, Github, Calendar } from 'lucide-react'
+import { Shield, Github, Calendar, Menu, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { usePathname } from 'next/navigation'
 
 export default function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    // Close mobile menu on route change
+    setIsMenuOpen(false)
+  }, [pathname])
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
+
+  const menuVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: -20 },
+    visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+    exit: { opacity: 0, scale: 0.9, y: -20, transition: { duration: 0.15, ease: 'easeIn' } }
+  }
+
   return (
-    <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-200/60 shadow-sm">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="sticky top-0 z-50 glassmorphism shadow-sm">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="relative flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2.5 group">
@@ -18,31 +39,54 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex items-center gap-6">
-            <Link
-              href="/#today"
-              className="text-sm font-medium text-gray-700 hover:text-black transition-colors"
-            >
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-1">
+            <Link href="/#today" className="text-sm font-medium text-gray-700 hover:text-blue-600 rounded-lg px-4 py-2 transition-all duration-200 hover:bg-gray-500/10">
               Today
             </Link>
-            <Link
-              href="/archive"
-              className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-black transition-colors"
-            >
+            <Link href="/archive" className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-blue-600 rounded-lg px-4 py-2 transition-all duration-200 hover:bg-gray-500/10">
               <Calendar className="w-4 h-4" />
               <span>Archive</span>
             </Link>
-            <a
-              href="https://github.com/pentoshi007/oh-my-security"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-500 hover:text-black transition-colors"
-              aria-label="GitHub Repository"
-            >
+            <a href="https://github.com/pentoshi007/oh-my-security" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black rounded-lg p-2 transition-all duration-200 hover:bg-gray-500/10" aria-label="GitHub Repository">
               <Github className="w-5 h-5" />
             </a>
           </nav>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button onClick={toggleMenu} aria-label="Toggle menu">
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+
+          {/* Mobile Menu Dropdown */}
+          <AnimatePresence>
+            {isMenuOpen && (
+              <motion.div
+                variants={menuVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="absolute top-full inset-x-0 p-4 -mx-4"
+                style={{ transformOrigin: 'top center' }}
+              >
+                <div className="glassmorphism shadow-lg rounded-xl">
+                  <nav className="flex flex-col space-y-1 p-2">
+                    <Link href="/#today" className="px-4 py-3 text-lg font-medium text-gray-800 hover:bg-gray-500/10 rounded-lg transition-colors">
+                      Today
+                    </Link>
+                    <Link href="/archive" className="px-4 py-3 text-lg font-medium text-gray-800 hover:bg-gray-500/10 rounded-lg transition-colors">
+                      Archive
+                    </Link>
+                    <a href="https://github.com/pentoshi007/oh-my-security" target="_blank" rel="noopener noreferrer" className="px-4 py-3 text-lg font-medium text-gray-800 hover:bg-gray-500/10 rounded-lg transition-colors">
+                      GitHub
+                    </a>
+                  </nav>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

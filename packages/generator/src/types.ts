@@ -48,7 +48,7 @@ export const RedTeamContentSchema = z.object({
 // Main content schema for each day
 export const DailyContentSchema = z.object({
   date: z.string().describe('Date in YYYY-MM-DD format'),
-  attackType: z.enum(AttackTypes).describe('The main attack type covered'),
+  attackType: z.string().describe('The main attack type covered'), // Changed from enum to string for flexibility
   article: z.object({
     title: z.string().describe('Original news article title'),
     url: z.string().url().describe('Link to the source article'),
@@ -63,6 +63,9 @@ export const DailyContentSchema = z.object({
   metadata: z.object({
     generatedAt: z.string().describe('Timestamp when content was generated'),
     version: z.string().default('1.0.0'),
+    attackId: z.string().optional().describe('Unique ID of the attack methodology'),
+    category: z.string().optional().describe('Attack category'),
+    newsArticlesUsed: z.number().optional().describe('Number of news articles used for generation'),
   }),
 });
 
