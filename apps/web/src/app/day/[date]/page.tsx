@@ -17,7 +17,7 @@ export async function generateStaticParams() {
   }))
 }
 
-export default function DayPage({ params }: DayPageProps) {
+export default async function DayPage({ params }: DayPageProps) {
   const content = getContentByDate(params.date)
 
   if (!content) {
