@@ -114,7 +114,7 @@ export default function Header() {
                   style={{ transformOrigin: 'top center' }}
                   data-mobile-menu
                 >
-                  <div className="glassmorphism shadow-lg rounded-xl border border-gray-200/50">
+                  <div className="bg-white/80 backdrop-blur-lg shadow-lg rounded-xl border border-gray-200/50">
                     <nav className="flex flex-col p-2">
                       <Link 
                         href="/#today" 
