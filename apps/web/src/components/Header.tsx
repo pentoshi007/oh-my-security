@@ -70,7 +70,7 @@ export default function Header() {
               <Calendar className="w-4 h-4" />
               <span>Archive</span>
             </Link>
-            <a href="https://github.com/pentoshi007/oh-my-security" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black rounded-lg p-2 transition-all duration-200 hover:bg-gray-500/10" aria-label="GitHub Repository">
+            <a href="https://github.com/pentoshi007/oh-my-security" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center text-gray-500 hover:text-black rounded-lg px-4 py-2 transition-all duration-200 hover:bg-gray-500/10" aria-label="GitHub Repository">
               <Github className="w-5 h-5" />
             </a>
           </nav>
