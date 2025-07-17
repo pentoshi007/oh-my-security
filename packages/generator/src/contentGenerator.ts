@@ -43,7 +43,7 @@ export async function generateAndSaveContent(spinner: Ora) {
   // Load history
   spinner.start('Loading generation history...');
   await historyTracker.load();
-  const recentAttackIds = historyTracker.getRecentAttackIds();
+  let recentAttackIds = historyTracker.getRecentAttackIds();
   spinner.succeed('History loaded');
 
   // Check if we should discover new attacks
@@ -77,6 +77,28 @@ export async function generateAndSaveContent(spinner: Ora) {
 
   // Select next attack methodology
   spinner.start('Selecting attack methodology...');
+
+  const currentDate = getCurrentDate();
+  const contentDir = join(__dirname, '../../../content');
+  const filePath = join(contentDir, `${currentDate}.json`);
+
+  // Check if content already exists for today
+  let existingAttackId: string | null = null;
+  try {
+    const { readFileSync } = await import('fs');
+    const { parse } = await import('json5'); // Use json5 for flexible parsing if needed
+    const existingContent = readFileSync(filePath, 'utf-8');
+    const parsed = parse(existingContent);
+    existingAttackId = parsed.metadata?.attackId;
+    if (existingAttackId) {
+      console.log(chalk.yellow(`Existing content found for ${currentDate}. Forcing different attack...`));
+      // Temporarily add existing attack to recent to avoid selecting the same
+      recentAttackIds = [...recentAttackIds, existingAttackId];
+    }
+  } catch (error) {
+    // File doesn't exist or can't be read/parsed - proceed normally
+  }
+
   const selectedAttack = getNextAttack(recentAttackIds);
   spinner.succeed(`Selected: ${selectedAttack.name}`);
   console.log(chalk.blue(`📚 Category: ${selectedAttack.category}`));
@@ -107,7 +129,6 @@ export async function generateAndSaveContent(spinner: Ora) {
     aiService.generateRedTeamContent(selectedAttack, articles),
   ]);
 
-  const currentDate = getCurrentDate();
   const dailyContent: DailyContent = {
     date: currentDate,
     attackType: selectedAttack.name as any, // We'll need to update the types
@@ -139,9 +160,7 @@ export async function generateAndSaveContent(spinner: Ora) {
 
   const validatedContent = DailyContentSchema.parse(dailyContent);
 
-  const contentDir = join(__dirname, '../../../content');
   await mkdir(contentDir, { recursive: true });
-  const filePath = join(contentDir, `${currentDate}.json`);
   await writeFile(filePath, JSON.stringify(validatedContent, null, 2), 'utf-8');
   
   // Update history
