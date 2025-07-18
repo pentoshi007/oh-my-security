@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server'
 import { storeContentInSupabase } from '../../../lib/supabase'
 
+// Force dynamic rendering for cron jobs
+export const dynamic = 'force-dynamic'
+
 // Enhanced mock Ora instance for serverless environment
 const createMockSpinner = (operation: string) => ({
   start: (text?: string) => {
@@ -67,13 +70,23 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
   
   try {
-    // Verify cron secret for security
-    const authHeader = request.headers.get('authorization');
-    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+    console.log('🚀 Cron job started at:', new Date().toISOString());
+    console.log('📍 User-Agent:', request.headers.get('user-agent'));
+    console.log('📍 Authorization header present:', !!request.headers.get('authorization'));
     
-    if (process.env.CRON_SECRET && authHeader !== expectedAuth) {
-      console.log('❌ Unauthorized cron attempt');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // Verify cron secret for security (only if CRON_SECRET is set)
+    if (process.env.CRON_SECRET) {
+      const authHeader = request.headers.get('authorization');
+      const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+      
+      if (authHeader !== expectedAuth) {
+        console.log('❌ Unauthorized cron attempt - auth header mismatch');
+        console.log('Expected:', expectedAuth.substring(0, 20) + '...');
+        console.log('Received:', authHeader?.substring(0, 20) + '...');
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    } else {
+      console.log('⚠️ CRON_SECRET not set - skipping authorization check');
     }
 
     // Check required environment variables
@@ -144,7 +157,8 @@ export async function GET(request: NextRequest) {
       success: false, 
       error: errorMessage,
       timestamp: new Date().toISOString(),
-      duration: `${duration}ms`
+      duration: `${duration}ms`,
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 } 
