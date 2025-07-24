@@ -1,11 +1,12 @@
 {
   "/api/archive/route": "app/api/archive/route.js",
   "/api/content/[date]/route": "app/api/content/[date]/route.js",
+  "/api/revalidate/route": "app/api/revalidate/route.js",
   "/api/subscribe/route": "app/api/subscribe/route.js",
   "/_not-found/page": "app/_not-found/page.js",
+  "/api/cron/route": "app/api/cron/route.js",
   "/about/page": "app/about/page.js",
   "/archive/page": "app/archive/page.js",
-  "/page": "app/page.js",
-  "/api/cron/route": "app/api/cron/route.js",
-  "/day/[date]/page": "app/day/[date]/page.js"
+  "/day/[date]/page": "app/day/[date]/page.js",
+  "/page": "app/page.js"
 }

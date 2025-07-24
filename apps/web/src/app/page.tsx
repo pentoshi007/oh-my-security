@@ -6,6 +6,9 @@ import SubscribeForm from '@/components/SubscribeForm'
 import ScrollAnimationWrapper from '@/components/ScrollAnimationWrapper'
 import ContentSection from '@/components/ContentSection'
 
+// Revalidate every hour to ensure fresh content
+export const revalidate = 3600
+
 export default async function HomePage() {
   const content = await getLatestContent()
   const attackCount = 45 // Hardcoded for now, can be made dynamic later
@@ -21,7 +24,7 @@ export default async function HomePage() {
               Daily Cybersecurity Education
             </div>
           </ScrollAnimationWrapper>
-          
+
           <ScrollAnimationWrapper delay={0.1}>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Learn Cybersecurity
@@ -29,14 +32,14 @@ export default async function HomePage() {
               at a Time
             </h1>
           </ScrollAnimationWrapper>
-          
+
           <ScrollAnimationWrapper delay={0.2}>
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Learn from real-world cyber attacks with daily content covering both defensive (blue team) 
+              Learn from real-world cyber attacks with daily content covering both defensive (blue team)
               and offensive (red team) perspectives. Stay ahead of the latest threats.
             </p>
           </ScrollAnimationWrapper>
-          
+
           <ScrollAnimationWrapper delay={0.3}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="#today" className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 transform hover:scale-105">
@@ -60,7 +63,7 @@ export default async function HomePage() {
                 Professional cybersecurity education designed for modern security practitioners
               </p>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-8 md:gap-12">
               <div className="text-center p-6">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
@@ -71,7 +74,7 @@ export default async function HomePage() {
                   Learn defensive strategies, threat detection, incident response, and security monitoring techniques.
                 </p>
               </div>
-              
+
               <div className="text-center p-6">
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                   <Target className="w-6 h-6 text-red-600" />
@@ -81,7 +84,7 @@ export default async function HomePage() {
                   Understand attack methodologies, penetration testing, and ethical hacking approaches.
                 </p>
               </div>
-              
+
               <div className="text-center p-6">
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                   <BookOpen className="w-6 h-6 text-green-600" />
@@ -103,16 +106,16 @@ export default async function HomePage() {
         title="Today's Learning Topic"
         subtitle="Fresh cybersecurity content delivered daily"
       >
-          <div className="max-w-6xl mx-auto">
-            {content ? (
-              <ContentDisplay content={content} />
-            ) : (
-              <div className="text-center glassmorphic p-8">
-                <h3 className="text-xl font-semibold text-gray-700 mb-4">No Content Available</h3>
-                <p className="text-gray-600">Content is being generated. Please check back later!</p>
-              </div>
-            )}
-          </div>
+        <div className="max-w-6xl mx-auto">
+          {content ? (
+            <ContentDisplay content={content} />
+          ) : (
+            <div className="text-center glassmorphic p-8">
+              <h3 className="text-xl font-semibold text-gray-700 mb-4">No Content Available</h3>
+              <p className="text-gray-600">Content is being generated. Please check back later!</p>
+            </div>
+          )}
+        </div>
       </ContentSection>
 
       {/* Stats Section */}
@@ -127,7 +130,7 @@ export default async function HomePage() {
                 <div className="text-3xl font-bold text-gray-900 mb-1">{attackCount}+</div>
                 <div className="text-gray-600">Attack Types Covered</div>
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-center mb-2">
                   <Users className="w-8 h-8 text-blue-600" />
@@ -135,7 +138,7 @@ export default async function HomePage() {
                 <div className="text-3xl font-bold text-gray-900 mb-1">Daily</div>
                 <div className="text-gray-600">Fresh Content</div>
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-center mb-2">
                   <Globe className="w-8 h-8 text-blue-600" />

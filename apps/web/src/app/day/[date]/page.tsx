@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation'
 import ContentSection from '@/components/ContentSection'
 import Link from 'next/link'
 
+// Revalidate every hour to ensure fresh content
+export const revalidate = 3600
+
 interface DayPageProps {
   params: Promise<{
     date: string
@@ -13,7 +16,7 @@ interface DayPageProps {
 export async function generateStaticParams() {
   try {
     const allContent = await getAllContent()
-   
+
     return allContent.map((content) => ({
       date: content.date,
     }))
@@ -32,8 +35,8 @@ export default async function DayPage({ params }: DayPageProps) {
   }
 
   return (
-    <ContentSection 
-      id="content" 
+    <ContentSection
+      id="content"
       className="py-16 px-6"
       title={content.attackType}
       subtitle={`Security analysis for ${new Date(content.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
@@ -41,8 +44,8 @@ export default async function DayPage({ params }: DayPageProps) {
       <div className="max-w-6xl mx-auto">
         {/* Navigation Button */}
         <div className="mb-8">
-          <Link 
-            href="/archive" 
+          <Link
+            href="/archive"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-all duration-300 hover:scale-105 border border-primary/20"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +54,7 @@ export default async function DayPage({ params }: DayPageProps) {
             Back to Archive
           </Link>
         </div>
-        
+
         <ContentDisplay content={content} />
       </div>
     </ContentSection>
