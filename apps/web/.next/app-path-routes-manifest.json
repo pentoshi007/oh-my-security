@@ -1,0 +1,11 @@
+{
+  "/api/archive/route": "/api/archive",
+  "/api/content/[date]/route": "/api/content/[date]",
+  "/api/subscribe/route": "/api/subscribe",
+  "/_not-found/page": "/_not-found",
+  "/about/page": "/about",
+  "/archive/page": "/archive",
+  "/page": "/",
+  "/api/cron/route": "/api/cron",
+  "/day/[date]/page": "/day/[date]"
+}
