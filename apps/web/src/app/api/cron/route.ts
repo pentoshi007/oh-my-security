@@ -688,6 +688,26 @@ export async function GET(request: NextRequest) {
     await storeContentInSupabase(content);
     mockSpinner.succeed('Content stored successfully in database');
 
+    // Trigger cache revalidation to update pages immediately
+    mockSpinner.start('Refreshing cached pages...');
+    try {
+      const revalidateUrl = new URL('/api/revalidate', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      revalidateUrl.searchParams.set('date', content.date);
+      if (process.env.REVALIDATE_SECRET) {
+        revalidateUrl.searchParams.set('secret', process.env.REVALIDATE_SECRET);
+      }
+
+      const revalidateResponse = await fetch(revalidateUrl.toString(), { method: 'POST' });
+      if (revalidateResponse.ok) {
+        mockSpinner.succeed('Pages refreshed successfully');
+      } else {
+        mockSpinner.warn('Page refresh failed, but content was stored');
+      }
+    } catch (revalidateError) {
+      mockSpinner.warn('Page refresh failed, but content was stored');
+      console.error('Revalidation error:', revalidateError);
+    }
+
     // Filesystem backup (only in development or when content directory exists)
     if (process.env.NODE_ENV === 'development') {
       try {

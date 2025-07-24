@@ -2,6 +2,9 @@ import { getAllContent } from '../../lib/content'
 import Link from 'next/link'
 import ArchiveClient from './ArchiveClient'
 
+// Revalidate every hour to ensure fresh content
+export const revalidate = 3600
+
 export default async function ArchivePage() {
   let archiveContent: any[] = []
   let error: string | null = null
@@ -23,7 +26,7 @@ export default async function ArchivePage() {
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
         {/* Back to Home Button - Mobile Optimized */}
         <div className="mb-6 sm:mb-8">
-          <Link 
+          <Link
             href="/"
             className="inline-flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-300 hover:scale-105 border border-gray-200 text-sm sm:text-base font-medium min-h-[48px]"
           >
