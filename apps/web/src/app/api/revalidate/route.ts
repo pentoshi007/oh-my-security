@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,23 +10,40 @@ export async function POST(request: NextRequest) {
             return Response.json({ message: 'Invalid secret' }, { status: 401 })
         }
 
+        // Get the date parameter
+        const date = request.nextUrl.searchParams.get('date')
+
         // Revalidate all main pages
-        revalidatePath('/')
-        revalidatePath('/archive')
+        revalidatePath('/', 'page')
+        revalidatePath('/archive', 'page')
+
+        // Revalidate all day pages
         revalidatePath('/day/[date]', 'page')
 
         // Also revalidate specific date if provided
-        const date = request.nextUrl.searchParams.get('date')
         if (date) {
-            revalidatePath(`/day/${date}`)
+            revalidatePath(`/day/${date}`, 'page')
         }
+
+        // Revalidate content-related tags
+        revalidateTag('content')
+        revalidateTag('latest-content')
+        revalidateTag('archive')
+
+        if (date) {
+            revalidateTag(`content-${date}`)
+        }
+
+        console.log(`✅ Revalidated pages: /, /archive, /day/[date]${date ? `, /day/${date}` : ''}`)
 
         return Response.json({
             revalidated: true,
             timestamp: new Date().toISOString(),
-            paths: ['/', '/archive', '/day/[date]', date ? `/day/${date}` : null].filter(Boolean)
+            paths: ['/', '/archive', '/day/[date]', date ? `/day/${date}` : null].filter(Boolean),
+            tags: ['content', 'latest-content', 'archive', date ? `content-${date}` : null].filter(Boolean)
         })
     } catch (err) {
+        console.error('Revalidation error:', err)
         return Response.json({
             message: 'Error revalidating',
             error: err instanceof Error ? err.message : 'Unknown error'
