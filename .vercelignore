@@ -1,0 +1,167 @@
+# =============================================================================
+# VERCEL IGNORE FILE
+# Files and directories to ignore during Vercel deployment
+# =============================================================================
+
+# =============================================================================
+# DEVELOPMENT FILES
+# =============================================================================
+# Environment files (use Vercel dashboard for env vars)
+.env
+.env.local
+.env.development.local
+.env.test.local
+*.env
+
+# Development scripts
+fix-dev-server.sh
+migrate-to-supabase.js
+
+# =============================================================================
+# DOCUMENTATION & README FILES
+# =============================================================================
+README.md
+CONTRIBUTING.md
+LICENSE
+CHANGELOG.md
+docs/
+*.md
+!apps/web/README.md
+
+# =============================================================================
+# CONFIGURATION FILES
+# =============================================================================
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# IDE configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.npmrc
+.yarnrc
+
+# =============================================================================
+# SOURCE CODE NOT NEEDED FOR DEPLOYMENT
+# =============================================================================
+# Generator package (not needed for web deployment)
+packages/generator/
+
+# Content files (using Supabase as primary storage)
+content/
+!content/README.md
+
+# =============================================================================
+# BUILD & CACHE FILES
+# =============================================================================
+# Node modules (Vercel installs these)
+node_modules/
+
+# Build caches
+.next/cache/
+.cache/
+.eslintcache
+.stylelintcache
+
+# TypeScript build info
+*.tsbuildinfo
+
+# =============================================================================
+# TESTING & DEVELOPMENT TOOLS
+# =============================================================================
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+**/*.test.jsx
+**/*.spec.ts
+**/*.spec.tsx
+**/*.spec.js
+**/*.spec.jsx
+
+# Test directories
+__tests__/
+tests/
+test/
+coverage/
+.nyc_output/
+
+# Development tools
+.eslintrc.*
+.prettierrc.*
+.prettierignore
+jest.config.*
+vitest.config.*
+playwright.config.*
+
+# =============================================================================
+# LOGS & TEMPORARY FILES
+# =============================================================================
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Linux
+*~
+
+# =============================================================================
+# BACKUP & ARCHIVE FILES
+# =============================================================================
+*.backup
+*.bak
+*.orig
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# =============================================================================
+# SUPABASE LOCAL DEVELOPMENT
+# =============================================================================
+supabase/
+SUPABASE_SETUP.sql
+
+# =============================================================================
+# SECURITY FILES
+# =============================================================================
+# Certificate files
+*.key
+*.pem
+*.crt
+*.csr
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Local subscribers backup
+subscribers.csv

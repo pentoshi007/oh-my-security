@@ -1,0 +1,114 @@
+# =============================================================================
+# DOCKER IGNORE FILE
+# Files and directories to ignore when building Docker images
+# =============================================================================
+
+# =============================================================================
+# VERSION CONTROL
+# =============================================================================
+.git
+.gitignore
+.gitattributes
+
+# =============================================================================
+# DEPENDENCIES (will be installed in container)
+# =============================================================================
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# =============================================================================
+# ENVIRONMENT & SECRETS
+# =============================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# =============================================================================
+# BUILD OUTPUTS
+# =============================================================================
+.next
+out
+dist
+build
+*.tsbuildinfo
+
+# =============================================================================
+# DEVELOPMENT FILES
+# =============================================================================
+README.md
+CONTRIBUTING.md
+LICENSE
+CHANGELOG.md
+docs
+*.md
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# =============================================================================
+# TESTING & COVERAGE
+# =============================================================================
+coverage
+.nyc_output
+test-results
+playwright-report
+
+# =============================================================================
+# CACHE & TEMPORARY FILES
+# =============================================================================
+.cache
+.parcel-cache
+.eslintcache
+.stylelintcache
+tmp
+temp
+*.tmp
+*.temp
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+*~
+
+# =============================================================================
+# DEPLOYMENT & CLOUD
+# =============================================================================
+.vercel
+.now
+
+# =============================================================================
+# PROJECT SPECIFIC
+# =============================================================================
+# Content files (using Supabase)
+content
+!content/README.md
+
+# Local subscribers backup
+subscribers.csv
+
+# Migration scripts
+migrate-to-supabase.js
+fix-dev-server.sh
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+supabase/config.toml
