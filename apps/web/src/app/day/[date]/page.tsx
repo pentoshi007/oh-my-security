@@ -4,8 +4,8 @@ import { notFound } from 'next/navigation'
 import ContentSection from '@/components/ContentSection'
 import Link from 'next/link'
 
-// Revalidate every hour to ensure fresh content
-export const revalidate = 3600
+// Revalidate every 5 minutes to ensure fresh content
+export const revalidate = 300
 
 interface DayPageProps {
   params: Promise<{

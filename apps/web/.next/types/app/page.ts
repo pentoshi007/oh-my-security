@@ -1,4 +1,4 @@
-// File: /Users/aniketpandey/Desktop/oh-my-security(OMS)/apps/web/src/app/page.tsx
+// File: /Users/aniketpandey/Desktop/oh-my-security/apps/web/src/app/page.tsx
 import * as entry from '../../../src/app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
