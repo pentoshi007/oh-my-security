@@ -95,48 +95,59 @@ export default function Header() {
           <AnimatePresence>
             {isMenuOpen && (
               <>
-                {/* Backdrop */}
+                {/* Backdrop - now just a dark overlay, no blur */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/20 backdrop-blur-sm md:hidden"
+                  className="fixed inset-0 bg-black/40 md:hidden z-40"
                   style={{ top: '0' }}
                 />
-                
-                {/* Menu Content */}
+                {/* Menu Content - more solid, professional look */}
                 <motion.div
                   variants={menuVariants}
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="absolute top-full left-0 right-0 mx-4 mt-2"
+                  className="fixed top-0 right-0 left-0 mx-auto mt-0 max-w-sm w-full z-50"
                   style={{ transformOrigin: 'top center' }}
                   data-mobile-menu
                 >
-                  <div className="bg-white/80 backdrop-blur-lg shadow-lg rounded-xl border border-gray-200/50">
-                    <nav className="flex flex-col p-2">
+                  <div className="relative bg-white rounded-b-2xl shadow-2xl border border-gray-200 px-6 pt-6 pb-4">
+                    {/* Close button at top right */}
+                    <button
+                      onClick={toggleMenu}
+                      aria-label="Close menu"
+                      className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="w-6 h-6 text-gray-700" />
+                    </button>
+                    <nav className="flex flex-col gap-2 mt-4">
                       <Link 
                         href="/#today" 
-                        className="flex items-center px-4 py-4 text-base font-medium text-gray-800 hover:bg-gray-500/10 rounded-lg transition-colors active:bg-gray-500/20"
+                        className="flex items-center gap-3 px-4 py-3 text-lg font-semibold text-gray-900 hover:bg-blue-50 rounded-xl transition-colors active:bg-blue-100"
+                        onClick={() => setIsMenuOpen(false)}
                       >
-                        <span>Today's Threat</span>
+                        <span className="inline-block bg-blue-100 text-blue-600 rounded-full p-1 mr-2"><Calendar className="w-5 h-5" /></span>
+                        Today's Threat
                       </Link>
                       <Link 
                         href="/archive" 
-                        className="flex items-center gap-3 px-4 py-4 text-base font-medium text-gray-800 hover:bg-gray-500/10 rounded-lg transition-colors active:bg-gray-500/20"
+                        className="flex items-center gap-3 px-4 py-3 text-lg font-semibold text-gray-900 hover:bg-blue-50 rounded-xl transition-colors active:bg-blue-100"
+                        onClick={() => setIsMenuOpen(false)}
                       >
-                        <Calendar className="w-5 h-5" />
-                        <span>Archive</span>
+                        <span className="inline-block bg-blue-100 text-blue-600 rounded-full p-1 mr-2"><Calendar className="w-5 h-5" /></span>
+                        Archive
                       </Link>
                       <a 
                         href="https://github.com/pentoshi007/oh-my-security" 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="flex items-center gap-3 px-4 py-4 text-base font-medium text-gray-800 hover:bg-gray-500/10 rounded-lg transition-colors active:bg-gray-500/20"
+                        className="flex items-center gap-3 px-4 py-3 text-lg font-semibold text-gray-900 hover:bg-blue-50 rounded-xl transition-colors active:bg-blue-100"
+                        onClick={() => setIsMenuOpen(false)}
                       >
-                        <Github className="w-5 h-5" />
-                        <span>GitHub</span>
+                        <span className="inline-block bg-gray-100 text-gray-700 rounded-full p-1 mr-2"><Github className="w-5 h-5" /></span>
+                        GitHub
                       </a>
                     </nav>
                   </div>
