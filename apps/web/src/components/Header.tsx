@@ -140,15 +140,7 @@ export default function Header() {
                     {/* Decorative gradient background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 opacity-50" />
                     <div className="relative z-10">
-                      {/* Close button at top right */}
-                      <button
-                        onClick={toggleMenu}
-                        aria-label="Close menu"
-                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100/80 transition-colors"
-                      >
-                        <X className="w-6 h-6 text-gray-700" />
-                      </button>
-                      <nav className="flex flex-col gap-3 mt-4">
+                      <nav className="flex flex-col gap-3">
                         <motion.div variants={menuItemVariants}>
                           <Link 
                             href="/#today" 
