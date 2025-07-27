@@ -691,21 +691,58 @@ export async function GET(request: NextRequest) {
     // Trigger cache revalidation to update pages immediately
     mockSpinner.start('Refreshing cached pages...');
     try {
-      const revalidateUrl = new URL('/api/revalidate', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      // Try multiple revalidation approaches for better reliability
+      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      const revalidateUrl = new URL('/api/revalidate', baseUrl);
       revalidateUrl.searchParams.set('date', content.date);
       if (process.env.REVALIDATE_SECRET) {
         revalidateUrl.searchParams.set('secret', process.env.REVALIDATE_SECRET);
       }
 
-      const revalidateResponse = await fetch(revalidateUrl.toString(), { method: 'POST' });
+      console.log('🔄 Attempting revalidation at:', revalidateUrl.toString());
+      
+      const revalidateResponse = await fetch(revalidateUrl.toString(), { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
+      
       if (revalidateResponse.ok) {
+        const result = await revalidateResponse.json();
+        console.log('✅ Revalidation successful:', result);
         mockSpinner.succeed('Pages refreshed successfully');
       } else {
+        const errorText = await revalidateResponse.text();
+        console.error('❌ Revalidation failed:', revalidateResponse.status, errorText);
         mockSpinner.warn('Page refresh failed, but content was stored');
       }
     } catch (revalidateError) {
+      console.error('❌ Revalidation error:', revalidateError);
       mockSpinner.warn('Page refresh failed, but content was stored');
-      console.error('Revalidation error:', revalidateError);
+      
+      // Try alternative revalidation approach
+      try {
+        console.log('🔄 Attempting alternative revalidation...');
+        const alternativeUrl = new URL('/api/revalidate', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+        alternativeUrl.searchParams.set('date', content.date);
+        
+        const altResponse = await fetch(alternativeUrl.toString(), { 
+          method: 'POST',
+          signal: AbortSignal.timeout(5000)
+        });
+        
+        if (altResponse.ok) {
+          console.log('✅ Alternative revalidation successful');
+          mockSpinner.succeed('Pages refreshed via alternative method');
+        } else {
+          console.log('❌ Alternative revalidation also failed');
+        }
+      } catch (altError) {
+        console.error('❌ Alternative revalidation error:', altError);
+      }
     }
 
     // Filesystem backup (only in development or when content directory exists)
