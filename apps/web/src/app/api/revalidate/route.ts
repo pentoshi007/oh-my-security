@@ -48,8 +48,7 @@ export async function POST(request: NextRequest) {
             }, { status: 401 })
         }
 
-        // Get the date parameter
-        const date = request.nextUrl.searchParams.get('date')
+        // Get the date parameter (already declared above)
         console.log('📅 Revalidating for date:', date || 'all dates');
 
         // Revalidate all main pages with error handling
