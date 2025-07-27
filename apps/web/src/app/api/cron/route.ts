@@ -4,6 +4,42 @@ import { storeContentInSupabase } from '../../../lib/supabase'
 // Force dynamic rendering for cron jobs
 export const dynamic = 'force-dynamic'
 
+// Helper function for alternative revalidation attempts
+async function attemptAlternativeRevalidation(date: string, baseUrl: string) {
+  try {
+    console.log('🔄 Attempting alternative revalidation...');
+    const alternativeUrl = new URL('/api/revalidate', baseUrl);
+    alternativeUrl.searchParams.set('date', date);
+    
+    if (process.env.REVALIDATE_SECRET) {
+      alternativeUrl.searchParams.set('secret', process.env.REVALIDATE_SECRET);
+    }
+    
+    console.log('🔄 Alternative revalidation URL:', alternativeUrl.toString());
+    
+    const altResponse = await fetch(alternativeUrl.toString(), { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (altResponse.ok) {
+      const result = await altResponse.json();
+      console.log('✅ Alternative revalidation successful:', result);
+      return true;
+    } else {
+      const errorText = await altResponse.text();
+      console.error('❌ Alternative revalidation failed:', altResponse.status, errorText);
+      return false;
+    }
+  } catch (altError) {
+    console.error('❌ Alternative revalidation error:', altError);
+    return false;
+  }
+}
+
 // Comprehensive attack methodologies database (matching original)
 const ATTACK_METHODOLOGIES = [
   {
@@ -690,58 +726,51 @@ export async function GET(request: NextRequest) {
 
     // Trigger cache revalidation to update pages immediately
     mockSpinner.start('Refreshing cached pages...');
-    try {
-      // Try multiple revalidation approaches for better reliability
-      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-      const revalidateUrl = new URL('/api/revalidate', baseUrl);
-      revalidateUrl.searchParams.set('date', content.date);
-      if (process.env.REVALIDATE_SECRET) {
-        revalidateUrl.searchParams.set('secret', process.env.REVALIDATE_SECRET);
-      }
-
-      console.log('🔄 Attempting revalidation at:', revalidateUrl.toString());
-      
-      const revalidateResponse = await fetch(revalidateUrl.toString(), { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Add timeout to prevent hanging
-        signal: AbortSignal.timeout(10000) // 10 second timeout
-      });
-      
-      if (revalidateResponse.ok) {
-        const result = await revalidateResponse.json();
-        console.log('✅ Revalidation successful:', result);
-        mockSpinner.succeed('Pages refreshed successfully');
-      } else {
-        const errorText = await revalidateResponse.text();
-        console.error('❌ Revalidation failed:', revalidateResponse.status, errorText);
-        mockSpinner.warn('Page refresh failed, but content was stored');
-      }
-    } catch (revalidateError) {
-      console.error('❌ Revalidation error:', revalidateError);
-      mockSpinner.warn('Page refresh failed, but content was stored');
-      
-      // Try alternative revalidation approach
+    
+    // Check if REVALIDATE_SECRET is available
+    if (!process.env.REVALIDATE_SECRET) {
+      console.error('❌ REVALIDATE_SECRET environment variable is not set');
+      mockSpinner.warn('Page refresh skipped - REVALIDATE_SECRET not configured');
+    } else {
       try {
-        console.log('🔄 Attempting alternative revalidation...');
-        const alternativeUrl = new URL('/api/revalidate', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-        alternativeUrl.searchParams.set('date', content.date);
+        // Primary revalidation attempt
+        const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+        const revalidateUrl = new URL('/api/revalidate', baseUrl);
+        revalidateUrl.searchParams.set('date', content.date);
+        revalidateUrl.searchParams.set('secret', process.env.REVALIDATE_SECRET);
+
+        console.log('🔄 Attempting revalidation at:', revalidateUrl.toString());
+        console.log('🔑 Using REVALIDATE_SECRET:', process.env.REVALIDATE_SECRET ? 'Set' : 'Not set');
         
-        const altResponse = await fetch(alternativeUrl.toString(), { 
+        const revalidateResponse = await fetch(revalidateUrl.toString(), { 
           method: 'POST',
-          signal: AbortSignal.timeout(5000)
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          // Add timeout to prevent hanging
+          signal: AbortSignal.timeout(15000) // 15 second timeout
         });
         
-        if (altResponse.ok) {
-          console.log('✅ Alternative revalidation successful');
-          mockSpinner.succeed('Pages refreshed via alternative method');
+        if (revalidateResponse.ok) {
+          const result = await revalidateResponse.json();
+          console.log('✅ Revalidation successful:', result);
+          mockSpinner.succeed('Pages refreshed successfully');
         } else {
-          console.log('❌ Alternative revalidation also failed');
+          const errorText = await revalidateResponse.text();
+          console.error('❌ Revalidation failed:', revalidateResponse.status, errorText);
+          console.error('🔍 Response headers:', Object.fromEntries(revalidateResponse.headers.entries()));
+          mockSpinner.warn('Page refresh failed, but content was stored');
+          
+          // Try alternative revalidation approach with more detailed logging
+          await attemptAlternativeRevalidation(content.date, baseUrl);
         }
-      } catch (altError) {
-        console.error('❌ Alternative revalidation error:', altError);
+      } catch (revalidateError) {
+        console.error('❌ Revalidation error:', revalidateError);
+        mockSpinner.warn('Page refresh failed, but content was stored');
+        
+        // Try alternative revalidation approach
+        const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+        await attemptAlternativeRevalidation(content.date, baseUrl);
       }
     }
 

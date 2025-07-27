@@ -6,18 +6,32 @@ export async function POST(request: NextRequest) {
     
     try {
         console.log('🔄 Starting revalidation process...');
+        console.log('🔍 Request URL:', request.url);
+        console.log('🔍 Request headers:', Object.fromEntries(request.headers.entries()));
         
         // Check for secret to prevent unauthorized revalidation
         const secret = request.nextUrl.searchParams.get('secret')
+        const date = request.nextUrl.searchParams.get('date')
+
+        console.log('🔑 Secret check:');
+        console.log('  - REVALIDATE_SECRET env var:', process.env.REVALIDATE_SECRET ? 'Set' : 'Not set');
+        console.log('  - Secret provided:', secret ? 'Yes' : 'No');
+        console.log('  - Date parameter:', date || 'Not provided');
 
         if (process.env.REVALIDATE_SECRET && secret !== process.env.REVALIDATE_SECRET) {
             console.log('❌ Invalid revalidation secret');
-            console.log('Expected:', process.env.REVALIDATE_SECRET ? 'Set' : 'Not set');
-            console.log('Received:', secret ? 'Provided' : 'Not provided');
+            console.log('  - Expected:', process.env.REVALIDATE_SECRET);
+            console.log('  - Received:', secret);
             return Response.json({ 
                 message: 'Invalid secret', 
                 error: 'REVALIDATE_SECRET environment variable is required for revalidation',
-                hint: 'Set REVALIDATE_SECRET environment variable in Vercel dashboard'
+                hint: 'Set REVALIDATE_SECRET environment variable in Vercel dashboard',
+                debug: {
+                    secretProvided: !!secret,
+                    secretLength: secret?.length || 0,
+                    envVarSet: !!process.env.REVALIDATE_SECRET,
+                    envVarLength: process.env.REVALIDATE_SECRET?.length || 0
+                }
             }, { status: 401 })
         }
 
@@ -26,7 +40,11 @@ export async function POST(request: NextRequest) {
             return Response.json({ 
                 message: 'Revalidation secret not configured', 
                 error: 'REVALIDATE_SECRET environment variable is required',
-                hint: 'Set REVALIDATE_SECRET environment variable in Vercel dashboard'
+                hint: 'Set REVALIDATE_SECRET environment variable in Vercel dashboard',
+                debug: {
+                    envVarSet: false,
+                    secretProvided: !!secret
+                }
             }, { status: 401 })
         }
 
@@ -119,7 +137,12 @@ export async function POST(request: NextRequest) {
             duration: `${duration}ms`,
             paths: revalidationResults,
             tags: tagResults,
-            success: revalidationResults.length > 0 || tagResults.length > 0
+            success: revalidationResults.length > 0 || tagResults.length > 0,
+            debug: {
+                date: date || 'all dates',
+                secretProvided: !!secret,
+                envVarSet: !!process.env.REVALIDATE_SECRET
+            }
         })
     } catch (err) {
         const duration = Date.now() - startTime;
