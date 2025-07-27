@@ -123,7 +123,7 @@ export default function Header() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/50 backdrop-blur-sm md:hidden z-40"
+                  className="fixed inset-0 bg-black/50 md:hidden z-40"
                   style={{ top: '0' }}
                 />
                 {/* Menu Content - positioned below navbar with improved styling */}
@@ -136,7 +136,7 @@ export default function Header() {
                   style={{ transformOrigin: 'top center' }}
                   data-mobile-menu
                 >
-                  <div className="relative bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/50 px-6 pt-6 pb-4 overflow-hidden">
+                  <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200/50 px-6 pt-6 pb-4 overflow-hidden">
                     {/* Decorative gradient background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 opacity-50" />
                     <div className="relative z-10">
@@ -144,7 +144,7 @@ export default function Header() {
                       <button
                         onClick={toggleMenu}
                         aria-label="Close menu"
-                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100/80 transition-colors backdrop-blur-sm"
+                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100/80 transition-colors"
                       >
                         <X className="w-6 h-6 text-gray-700" />
                       </button>
@@ -152,7 +152,7 @@ export default function Header() {
                         <motion.div variants={menuItemVariants}>
                           <Link 
                             href="/#today" 
-                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-blue-50/80 rounded-xl transition-all duration-200 active:bg-blue-100/80 backdrop-blur-sm border border-transparent hover:border-blue-200/50"
+                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-blue-50/80 rounded-xl transition-all duration-200 active:bg-blue-100/80 border border-transparent hover:border-blue-200/50"
                             onClick={() => setIsMenuOpen(false)}
                           >
                             <span className="inline-block bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full p-2 mr-3 shadow-lg">
@@ -164,7 +164,7 @@ export default function Header() {
                         <motion.div variants={menuItemVariants}>
                           <Link 
                             href="/archive" 
-                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-blue-50/80 rounded-xl transition-all duration-200 active:bg-blue-100/80 backdrop-blur-sm border border-transparent hover:border-blue-200/50"
+                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-blue-50/80 rounded-xl transition-all duration-200 active:bg-blue-100/80 border border-transparent hover:border-blue-200/50"
                             onClick={() => setIsMenuOpen(false)}
                           >
                             <span className="inline-block bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full p-2 mr-3 shadow-lg">
@@ -178,7 +178,7 @@ export default function Header() {
                             href="https://github.com/pentoshi007/oh-my-security" 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-gray-50/80 rounded-xl transition-all duration-200 active:bg-gray-100/80 backdrop-blur-sm border border-transparent hover:border-gray-200/50"
+                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-gray-50/80 rounded-xl transition-all duration-200 active:bg-gray-100/80 border border-transparent hover:border-gray-200/50"
                             onClick={() => setIsMenuOpen(false)}
                           >
                             <span className="inline-block bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-full p-2 mr-3 shadow-lg">

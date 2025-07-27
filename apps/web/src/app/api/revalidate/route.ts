@@ -12,7 +12,22 @@ export async function POST(request: NextRequest) {
 
         if (process.env.REVALIDATE_SECRET && secret !== process.env.REVALIDATE_SECRET) {
             console.log('❌ Invalid revalidation secret');
-            return Response.json({ message: 'Invalid secret' }, { status: 401 })
+            console.log('Expected:', process.env.REVALIDATE_SECRET ? 'Set' : 'Not set');
+            console.log('Received:', secret ? 'Provided' : 'Not provided');
+            return Response.json({ 
+                message: 'Invalid secret', 
+                error: 'REVALIDATE_SECRET environment variable is required for revalidation',
+                hint: 'Set REVALIDATE_SECRET environment variable in Vercel dashboard'
+            }, { status: 401 })
+        }
+
+        if (!process.env.REVALIDATE_SECRET) {
+            console.log('❌ REVALIDATE_SECRET environment variable not set');
+            return Response.json({ 
+                message: 'Revalidation secret not configured', 
+                error: 'REVALIDATE_SECRET environment variable is required',
+                hint: 'Set REVALIDATE_SECRET environment variable in Vercel dashboard'
+            }, { status: 401 })
         }
 
         // Get the date parameter
