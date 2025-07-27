@@ -40,9 +40,32 @@ export default function Header() {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
 
   const menuVariants = {
-    hidden: { opacity: 0, scale: 0.95, y: -10 },
-    visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } },
-    exit: { opacity: 0, scale: 0.95, y: -10, transition: { duration: 0.15, ease: 'easeIn' } }
+    hidden: { opacity: 0, scale: 0.95, y: -20 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0, 
+      transition: { 
+        duration: 0.3, 
+        ease: [0.4, 0, 0.2, 1],
+        staggerChildren: 0.1
+      } 
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.95, 
+      y: -20, 
+      transition: { 
+        duration: 0.2, 
+        ease: [0.4, 0, 1, 1] 
+      } 
+    }
+  }
+
+  const menuItemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -20 }
   }
 
   return (
@@ -91,65 +114,81 @@ export default function Header() {
             </button>
           </div>
 
-          {/* Mobile Menu Dropdown - Enhanced */}
+          {/* Mobile Menu Dropdown - Enhanced with better positioning */}
           <AnimatePresence>
             {isMenuOpen && (
               <>
-                {/* Backdrop - now just a dark overlay, no blur */}
+                {/* Backdrop with improved blur effect */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/40 md:hidden z-40"
+                  className="fixed inset-0 bg-black/50 backdrop-blur-sm md:hidden z-40"
                   style={{ top: '0' }}
                 />
-                {/* Menu Content - more solid, professional look */}
+                {/* Menu Content - positioned below navbar with improved styling */}
                 <motion.div
                   variants={menuVariants}
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="fixed top-0 right-0 left-0 mx-auto mt-0 max-w-sm w-full z-50"
+                  className="fixed top-16 right-4 left-4 mx-auto max-w-sm w-full z-50"
                   style={{ transformOrigin: 'top center' }}
                   data-mobile-menu
                 >
-                  <div className="relative bg-white rounded-b-2xl shadow-2xl border border-gray-200 px-6 pt-6 pb-4">
-                    {/* Close button at top right */}
-                    <button
-                      onClick={toggleMenu}
-                      aria-label="Close menu"
-                      className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
-                    >
-                      <X className="w-6 h-6 text-gray-700" />
-                    </button>
-                    <nav className="flex flex-col gap-2 mt-4">
-                      <Link 
-                        href="/#today" 
-                        className="flex items-center gap-3 px-4 py-3 text-lg font-semibold text-gray-900 hover:bg-blue-50 rounded-xl transition-colors active:bg-blue-100"
-                        onClick={() => setIsMenuOpen(false)}
+                  <div className="relative bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/50 px-6 pt-6 pb-4 overflow-hidden">
+                    {/* Decorative gradient background */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 opacity-50" />
+                    <div className="relative z-10">
+                      {/* Close button at top right */}
+                      <button
+                        onClick={toggleMenu}
+                        aria-label="Close menu"
+                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100/80 transition-colors backdrop-blur-sm"
                       >
-                        <span className="inline-block bg-blue-100 text-blue-600 rounded-full p-1 mr-2"><Calendar className="w-5 h-5" /></span>
-                        Today's Threat
-                      </Link>
-                      <Link 
-                        href="/archive" 
-                        className="flex items-center gap-3 px-4 py-3 text-lg font-semibold text-gray-900 hover:bg-blue-50 rounded-xl transition-colors active:bg-blue-100"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <span className="inline-block bg-blue-100 text-blue-600 rounded-full p-1 mr-2"><Calendar className="w-5 h-5" /></span>
-                        Archive
-                      </Link>
-                      <a 
-                        href="https://github.com/pentoshi007/oh-my-security" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="flex items-center gap-3 px-4 py-3 text-lg font-semibold text-gray-900 hover:bg-blue-50 rounded-xl transition-colors active:bg-blue-100"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <span className="inline-block bg-gray-100 text-gray-700 rounded-full p-1 mr-2"><Github className="w-5 h-5" /></span>
-                        GitHub
-                      </a>
-                    </nav>
+                        <X className="w-6 h-6 text-gray-700" />
+                      </button>
+                      <nav className="flex flex-col gap-3 mt-4">
+                        <motion.div variants={menuItemVariants}>
+                          <Link 
+                            href="/#today" 
+                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-blue-50/80 rounded-xl transition-all duration-200 active:bg-blue-100/80 backdrop-blur-sm border border-transparent hover:border-blue-200/50"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <span className="inline-block bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full p-2 mr-3 shadow-lg">
+                              <Calendar className="w-5 h-5" />
+                            </span>
+                            Today's Threat
+                          </Link>
+                        </motion.div>
+                        <motion.div variants={menuItemVariants}>
+                          <Link 
+                            href="/archive" 
+                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-blue-50/80 rounded-xl transition-all duration-200 active:bg-blue-100/80 backdrop-blur-sm border border-transparent hover:border-blue-200/50"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <span className="inline-block bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full p-2 mr-3 shadow-lg">
+                              <Calendar className="w-5 h-5" />
+                            </span>
+                            Archive
+                          </Link>
+                        </motion.div>
+                        <motion.div variants={menuItemVariants}>
+                          <a 
+                            href="https://github.com/pentoshi007/oh-my-security" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="flex items-center gap-3 px-4 py-4 text-lg font-semibold text-gray-900 hover:bg-gray-50/80 rounded-xl transition-all duration-200 active:bg-gray-100/80 backdrop-blur-sm border border-transparent hover:border-gray-200/50"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <span className="inline-block bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-full p-2 mr-3 shadow-lg">
+                              <Github className="w-5 h-5" />
+                            </span>
+                            GitHub
+                          </a>
+                        </motion.div>
+                      </nav>
+                    </div>
                   </div>
                 </motion.div>
               </>
