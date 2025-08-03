@@ -63,3 +63,19 @@ migrate-to-supabase.js
 
 # Development helper scripts
 fix-dev-server.sh
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Test files
+test-*.js
+test-*.ts
+
+# Development setup scripts
+*-setup.sh
+setup-*.sh
+
+# Package lock files (can be regenerated)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
