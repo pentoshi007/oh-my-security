@@ -75,7 +75,7 @@ test-*.ts
 *-setup.sh
 setup-*.sh
 
-# Package lock files (can be regenerated)
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# Package lock files (keep for version consistency)
+# package-lock.json - Keep for dependency version locking
+# yarn.lock - Keep for dependency version locking  
+# pnpm-lock.yaml - Keep for dependency version locking
