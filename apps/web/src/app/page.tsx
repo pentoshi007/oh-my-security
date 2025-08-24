@@ -6,8 +6,9 @@ import SubscribeForm from '@/components/SubscribeForm'
 import ScrollAnimationWrapper from '@/components/ScrollAnimationWrapper'
 import ContentSection from '@/components/ContentSection'
 
-// Revalidate every 5 minutes to ensure fresh content
-export const revalidate = 300
+// Force dynamic rendering to always fetch fresh content
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default async function HomePage() {
   const content = await getLatestContent()

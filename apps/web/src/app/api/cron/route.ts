@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { storeContentInSupabase } from '../../../lib/supabase'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 // Force dynamic rendering for cron jobs
 export const dynamic = 'force-dynamic'
@@ -588,7 +589,16 @@ async function generateDailyContent() {
   ]);
   mockSpinner.succeed('Comprehensive AI content generation completed');
 
-  const currentDate = new Date().toISOString().split('T')[0];
+  // Use Indian Standard Time (IST) for date generation
+  // This ensures content is generated for the correct Indian date at 12:01 AM IST
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  };
+  const currentDate = now.toLocaleDateString('en-CA', options); // Returns YYYY-MM-DD format
 
   // Create the comprehensive content structure (matching original format)
   const content = {
@@ -688,24 +698,29 @@ export async function GET(request: NextRequest) {
     await storeContentInSupabase(content);
     mockSpinner.succeed('Content stored successfully in database');
 
-    // Trigger cache revalidation to update pages immediately
+    // Trigger direct cache revalidation (internal, no HTTP calls needed)
     mockSpinner.start('Refreshing cached pages...');
     try {
-      const revalidateUrl = new URL('/api/revalidate', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-      revalidateUrl.searchParams.set('date', content.date);
-      if (process.env.REVALIDATE_SECRET) {
-        revalidateUrl.searchParams.set('secret', process.env.REVALIDATE_SECRET);
-      }
+      // Revalidate all main pages
+      revalidatePath('/', 'page');
+      revalidatePath('/archive', 'page');
+      revalidatePath('/day/[date]', 'page');
+      revalidatePath(`/day/${content.date}`, 'page');
 
-      const revalidateResponse = await fetch(revalidateUrl.toString(), { method: 'POST' });
-      if (revalidateResponse.ok) {
-        mockSpinner.succeed('Pages refreshed successfully');
-      } else {
-        mockSpinner.warn('Page refresh failed, but content was stored');
-      }
+      // Revalidate content-related tags
+      revalidateTag('content');
+      revalidateTag('latest-content');
+      revalidateTag('archive');
+      revalidateTag('homepage');
+      revalidateTag('all-content');
+      revalidateTag('content-by-date');
+      revalidateTag(`content-${content.date}`);
+
+      mockSpinner.succeed('Pages and cache refreshed successfully');
+      console.log('✅ Direct cache revalidation completed successfully');
     } catch (revalidateError) {
-      mockSpinner.warn('Page refresh failed, but content was stored');
-      console.error('Revalidation error:', revalidateError);
+      mockSpinner.warn('Cache refresh encountered an issue, but content was stored');
+      console.error('Direct revalidation error:', revalidateError);
     }
 
     // Filesystem backup (only in development or when content directory exists)
@@ -734,7 +749,7 @@ export async function GET(request: NextRequest) {
 
     return Response.json({
       success: true,
-      message: 'Daily content generated and stored in Supabase',
+      message: 'Daily content generated and stored with immediate cache refresh',
       date: content.date,
       attackType: content.attackType,
       category: content.metadata.category,
@@ -743,6 +758,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       duration: `${duration}ms`,
       storage: 'Supabase (Primary)',
+      cacheRevalidation: 'Internal (Direct)',
       environment: process.env.NODE_ENV || 'production'
     });
 

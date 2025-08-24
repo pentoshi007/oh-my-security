@@ -29,6 +29,9 @@ export async function POST(request: NextRequest) {
         revalidateTag('content')
         revalidateTag('latest-content')
         revalidateTag('archive')
+        revalidateTag('homepage')
+        revalidateTag('all-content')
+        revalidateTag('content-by-date')
 
         if (date) {
             revalidateTag(`content-${date}`)
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
             revalidated: true,
             timestamp: new Date().toISOString(),
             paths: ['/', '/archive', '/day/[date]', date ? `/day/${date}` : null].filter(Boolean),
-            tags: ['content', 'latest-content', 'archive', date ? `content-${date}` : null].filter(Boolean)
+            tags: ['content', 'latest-content', 'archive', 'homepage', 'all-content', 'content-by-date', date ? `content-${date}` : null].filter(Boolean)
         })
     } catch (err) {
         console.error('Revalidation error:', err)

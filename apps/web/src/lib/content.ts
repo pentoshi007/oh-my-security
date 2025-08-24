@@ -49,8 +49,8 @@ export const getContentByDate = unstable_cache(
   },
   ['content-by-date'],
   {
-    tags: ['content'],
-    revalidate: 300 // 5 minutes
+    tags: ['content', 'content-by-date'],
+    revalidate: 60 // Reduced to 1 minute for faster updates
   }
 )
 
@@ -78,8 +78,8 @@ export const getAllContent = unstable_cache(
   },
   ['all-content'],
   {
-    tags: ['content', 'archive'],
-    revalidate: 300 // 5 minutes
+    tags: ['content', 'archive', 'all-content'],
+    revalidate: 10 // Very short cache for responsiveness
   }
 )
 
@@ -169,23 +169,16 @@ async function getAvailableDatesFromFiles(): Promise<string[]> {
   }
 }
 
-// Get the latest content (for homepage)
-export const getLatestContent = unstable_cache(
-  async (): Promise<DailyContent | null> => {
-    try {
-      const allContent = await getAllContent()
-      return allContent.length > 0 ? allContent[0] : null
-    } catch (error) {
-      console.error('Error fetching latest content:', error)
-      return null
-    }
-  },
-  ['latest-content'],
-  {
-    tags: ['content', 'latest-content'],
-    revalidate: 300 // 5 minutes
+// Get the latest content (for homepage) - Always fetch fresh data
+export async function getLatestContent(): Promise<DailyContent | null> {
+  try {
+    const allContent = await getAllContent()
+    return allContent.length > 0 ? allContent[0] : null
+  } catch (error) {
+    console.error('Error fetching latest content:', error)
+    return null
   }
-)
+}
 
 // Legacy function for backward compatibility
 export function getTodaysContent(): DailyContent | null {
