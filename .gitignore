@@ -16,6 +16,8 @@ node_modules
 /.next/
 /out/
 /build/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
 # Logs
 npm-debug.log*
@@ -57,9 +59,16 @@ subscribers.csv
 
 # Content generation history
 content/.generation-history.json
+content/*.json
 
 # Migration scripts (after completion)
 migrate-to-supabase.js
 
 # Development helper scripts
 fix-dev-server.sh
+
+# Documentation files (optional)
+MARKETING.md
+ROADMAP.md
+DEPLOYMENT_OPTIONS.md
+LINKEDIN_RESUME_CONTENT.md
