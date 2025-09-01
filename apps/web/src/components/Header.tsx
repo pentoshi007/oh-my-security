@@ -100,8 +100,8 @@ export default function Header() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/20 backdrop-blur-sm md:hidden"
-                  style={{ top: '0' }}
+                  className="fixed inset-0 bg-black/30 backdrop-blur-md md:hidden"
+                  style={{ top: '4rem' }}
                 />
                 
                 {/* Menu Content */}
@@ -114,7 +114,7 @@ export default function Header() {
                   style={{ transformOrigin: 'top center' }}
                   data-mobile-menu
                 >
-                  <div className="bg-white/80 backdrop-blur-lg shadow-lg rounded-xl border border-gray-200/50">
+                  <div className="bg-white/95 backdrop-blur-xl shadow-lg rounded-xl border border-gray-200/50">
                     <nav className="flex flex-col p-2">
                       <Link 
                         href="/#today" 
