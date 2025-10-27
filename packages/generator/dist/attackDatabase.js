@@ -1,15 +1,4 @@
-export interface AttackMethodology {
-    id: string;
-    name: string;
-    category: string;
-    description: string;
-    searchKeywords: string[];
-    aliases: string[];
-    difficulty: 'Low' | 'Medium' | 'High';
-    impacts: string[];
-}
-
-export const ATTACK_DATABASE: AttackMethodology[] = [
+export const ATTACK_DATABASE = [
     // Network Attacks
     {
         id: 'ddos',
@@ -51,7 +40,6 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'Medium',
         impacts: ['Network Sniffing', 'Session Hijacking', 'DoS']
     },
-
     // Web Application Attacks
     {
         id: 'sql-injection',
@@ -113,7 +101,6 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'High',
         impacts: ['System Compromise', 'Data Theft', 'Service Disruption']
     },
-
     // Malware & Social Engineering
     {
         id: 'ransomware',
@@ -165,7 +152,6 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'Medium',
         impacts: ['Privacy Violation', 'Data Theft', 'System Performance']
     },
-
     // Authentication & Access Attacks
     {
         id: 'brute-force',
@@ -177,16 +163,16 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'Low',
         impacts: ['Account Compromise', 'Unauthorized Access', 'Data Breach']
     },
-        {
-            id: 'privilege-escalation',
-            name: 'Privilege Escalation',
-            category: 'Access Control Attacks',
-            description: 'Gaining elevated access to resources',
-            searchKeywords: ['privilege escalation attack', 'admin access exploit', 'root access vulnerability', 'elevation of privilege exploit', 'privilege escalation vulnerability'],
-            aliases: ['Vertical Privilege Escalation', 'Horizontal Privilege Escalation'],
-            difficulty: 'High',
-            impacts: ['System Compromise', 'Data Access', 'Persistence']
-        },
+    {
+        id: 'privilege-escalation',
+        name: 'Privilege Escalation',
+        category: 'Access Control Attacks',
+        description: 'Gaining elevated access to resources',
+        searchKeywords: ['privilege escalation attack', 'admin access exploit', 'root access vulnerability', 'elevation of privilege exploit', 'privilege escalation vulnerability'],
+        aliases: ['Vertical Privilege Escalation', 'Horizontal Privilege Escalation'],
+        difficulty: 'High',
+        impacts: ['System Compromise', 'Data Access', 'Persistence']
+    },
     {
         id: 'session-hijacking',
         name: 'Session Hijacking',
@@ -207,7 +193,6 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'Low',
         impacts: ['Account Compromise', 'Mass Breach', 'Lateral Movement']
     },
-
     // Advanced Persistent Threats
     {
         id: 'apt',
@@ -239,7 +224,6 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'High',
         impacts: ['Widespread Compromise', 'Trust Exploitation', 'Multiple Victims']
     },
-
     // Data-Specific Attacks
     {
         id: 'data-breach',
@@ -261,7 +245,6 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'Medium',
         impacts: ['Intellectual Property Theft', 'Competitive Disadvantage', 'Privacy Violation']
     },
-
     // Physical & IoT Attacks
     {
         id: 'evil-twin',
@@ -293,7 +276,6 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'Medium',
         impacts: ['Device Access', 'Data Theft', 'Privacy Violation']
     },
-
     // Crypto & Blockchain Attacks
     {
         id: 'cryptojacking',
@@ -315,7 +297,6 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'Medium',
         impacts: ['Financial Loss', 'Irreversible Theft', 'Privacy Violation']
     },
-
     // Misconfiguration & Human Error
     {
         id: 'misconfig',
@@ -348,77 +329,61 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         impacts: ['Information Disclosure', 'Unauthorized Access', 'Financial Loss']
     }
 ];
-
 // Helper function to get all unique attack categories
-export function getAttackCategories(): string[] {
+export function getAttackCategories() {
     return [...new Set(ATTACK_DATABASE.map(attack => attack.category))];
 }
-
 // Helper function to get attacks by category
-export function getAttacksByCategory(category: string): AttackMethodology[] {
+export function getAttacksByCategory(category) {
     return ATTACK_DATABASE.filter(attack => attack.category === category);
 }
-
 // Helper function to get attack by ID
-export function getAttackById(id: string): AttackMethodology | undefined {
+export function getAttackById(id) {
     return ATTACK_DATABASE.find(attack => attack.id === id);
 }
-
 // Dynamic attack database that can be updated
 let dynamicAttackDatabase = [...ATTACK_DATABASE];
-
 // Get a random attack that hasn't been used recently with improved selection logic
-export function getNextAttack(recentlyUsedIds: string[]): AttackMethodology {
-    const availableAttacks = dynamicAttackDatabase.filter(
-        attack => !recentlyUsedIds.includes(attack.id)
-    );
-
+export function getNextAttack(recentlyUsedIds) {
+    const availableAttacks = dynamicAttackDatabase.filter(attack => !recentlyUsedIds.includes(attack.id));
     if (availableAttacks.length === 0) {
         // If all attacks have been used, start over
         console.log('🔄 All attacks covered! Starting new cycle...');
         return dynamicAttackDatabase[Math.floor(Math.random() * dynamicAttackDatabase.length)];
     }
-
     // If very few attacks available, use simple random selection to avoid getting stuck
     if (availableAttacks.length <= 3) {
         console.log('⚠️  Very few attacks available, using simple random selection');
         return availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
     }
-
     // Enhanced selection logic to prevent clustering and improve distribution
     return selectOptimalAttack(availableAttacks, recentlyUsedIds);
 }
-
 // Enhanced attack selection algorithm
-function selectOptimalAttack(availableAttacks: AttackMethodology[], recentlyUsedIds: string[]): AttackMethodology {
+function selectOptimalAttack(availableAttacks, recentlyUsedIds) {
     // Get recent attacks for analysis
     const recentAttacks = recentlyUsedIds
         .map(id => dynamicAttackDatabase.find(attack => attack.id === id))
-        .filter(Boolean) as AttackMethodology[];
-
+        .filter(Boolean);
     // Calculate category distribution in recent history
-    const categoryCounts = new Map<string, number>();
+    const categoryCounts = new Map();
     recentAttacks.forEach(attack => {
         const count = categoryCounts.get(attack.category) || 0;
         categoryCounts.set(attack.category, count + 1);
     });
-
     // Calculate difficulty distribution in recent history
-    const difficultyCounts = new Map<string, number>();
+    const difficultyCounts = new Map();
     recentAttacks.forEach(attack => {
         const count = difficultyCounts.get(attack.difficulty) || 0;
         difficultyCounts.set(attack.difficulty, count + 1);
     });
-
     // Calculate weights for each available attack
     const attackWeights = availableAttacks.map(attack => {
         let weight = 1.0;
-
         // Moderate penalty for attacks from over-represented categories
         const recentCategoryCount = categoryCounts.get(attack.category) || 0;
         const categoryPenalty = Math.pow(0.7, recentCategoryCount); // Less aggressive penalty
         weight *= categoryPenalty;
-
         // Small bonus for attacks from under-represented categories (only if we have enough history)
         const totalRecent = recentAttacks.length;
         if (totalRecent > 10) {
@@ -427,70 +392,54 @@ function selectOptimalAttack(availableAttacks: AttackMethodology[], recentlyUsed
                 weight *= 1.2; // Smaller bonus
             }
         }
-
         // Moderate preference for different difficulty levels
         const recentDifficultyCount = difficultyCounts.get(attack.difficulty) || 0;
         const difficultyPenalty = Math.pow(0.85, recentDifficultyCount);
         weight *= difficultyPenalty;
-
         // Add some randomness to prevent getting stuck
         weight *= (0.8 + Math.random() * 0.4); // Random factor between 0.8 and 1.2
-
         return { attack, weight };
     });
-
     // Normalize weights
     const totalWeight = attackWeights.reduce((sum, item) => sum + item.weight, 0);
     const normalizedWeights = attackWeights.map(item => ({
         ...item,
         weight: item.weight / totalWeight
     }));
-
     // Weighted random selection
     const random = Math.random();
     let cumulativeWeight = 0;
-
     for (const item of normalizedWeights) {
         cumulativeWeight += item.weight;
         if (random <= cumulativeWeight) {
             return item.attack;
         }
     }
-
     // Fallback to last item (shouldn't happen)
     return normalizedWeights[normalizedWeights.length - 1].attack;
 }
-
 // Search for attacks by keywords
-export function searchAttacks(query: string): AttackMethodology[] {
+export function searchAttacks(query) {
     const lowerQuery = query.toLowerCase();
-    return dynamicAttackDatabase.filter(attack =>
-        attack.name.toLowerCase().includes(lowerQuery) ||
+    return dynamicAttackDatabase.filter(attack => attack.name.toLowerCase().includes(lowerQuery) ||
         attack.description.toLowerCase().includes(lowerQuery) ||
         attack.searchKeywords.some(keyword => keyword.toLowerCase().includes(lowerQuery)) ||
-        attack.aliases.some(alias => alias.toLowerCase().includes(lowerQuery))
-    );
+        attack.aliases.some(alias => alias.toLowerCase().includes(lowerQuery)));
 }
-
 // Add new attacks to the database
-export function addNewAttack(attack: AttackMethodology): boolean {
+export function addNewAttack(attack) {
     // Check if attack already exists
-    const exists = dynamicAttackDatabase.some(existing =>
-        existing.id === attack.id ||
-        existing.name.toLowerCase() === attack.name.toLowerCase()
-    );
-
+    const exists = dynamicAttackDatabase.some(existing => existing.id === attack.id ||
+        existing.name.toLowerCase() === attack.name.toLowerCase());
     if (!exists) {
         dynamicAttackDatabase.push(attack);
         console.log(`✅ Added new attack: ${attack.name} (${attack.category})`);
         return true;
     }
-
     return false;
 }
-
 // Add multiple new attacks
-export function addNewAttacks(attacks: AttackMethodology[]): number {
+export function addNewAttacks(attacks) {
     let addedCount = 0;
     for (const attack of attacks) {
         if (addNewAttack(attack)) {
@@ -499,24 +448,21 @@ export function addNewAttacks(attacks: AttackMethodology[]): number {
     }
     return addedCount;
 }
-
 // Get current database size
-export function getDatabaseSize(): number {
+export function getDatabaseSize() {
     return dynamicAttackDatabase.length;
 }
-
 // Get all attacks (including dynamically added ones)
-export function getAllAttacks(): AttackMethodology[] {
+export function getAllAttacks() {
     return [...dynamicAttackDatabase];
 }
-
 // Reset to original database (for testing)
-export function resetToOriginalDatabase(): void {
+export function resetToOriginalDatabase() {
     dynamicAttackDatabase = [...ATTACK_DATABASE];
 }
-
 // Check if we should look for new attacks (when we've covered most existing ones)
-export function shouldDiscoverNewAttacks(recentlyUsedIds: string[]): boolean {
+export function shouldDiscoverNewAttacks(recentlyUsedIds) {
     const coverageRatio = recentlyUsedIds.length / dynamicAttackDatabase.length;
     return coverageRatio >= 0.8; // When we've covered 80% of attacks, look for new ones
 }
+//# sourceMappingURL=attackDatabase.js.map

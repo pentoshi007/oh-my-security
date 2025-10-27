@@ -20,6 +20,7 @@ import {
 import { HistoryTracker } from './historyTracker.js';
 import { AttackDiscoveryService } from './attackDiscovery.js';
 import { NewsAPIArticle } from './types.js';
+import { ContentCleanupService } from './contentCleanup.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -190,6 +191,30 @@ export async function generateAndSaveContent(spinner: Ora) {
   
   // Update history
   await historyTracker.addAttackId(selectedAttack.id, selectedAttack.category, selectedAttack.difficulty);
+  
+  // Clean up old content to maintain 20-day retention
+  spinner.start('Cleaning up old content...');
+  try {
+    const cleanupService = new ContentCleanupService({ 
+      retentionDays: 20, 
+      dryRun: false, 
+      verbose: false 
+    });
+    const cleanupResult = await cleanupService.cleanupOldContent();
+    
+    if (cleanupResult.deleted.length > 0) {
+      spinner.succeed(`Cleaned up ${cleanupResult.deleted.length} old content files`);
+    } else {
+      spinner.succeed('No old content to clean up');
+    }
+    
+    if (cleanupResult.errors.length > 0) {
+      console.log(chalk.yellow(`⚠️  ${cleanupResult.errors.length} cleanup errors occurred`));
+    }
+  } catch (error) {
+    spinner.warn('Content cleanup failed (content still generated)');
+    console.log(chalk.yellow(`Cleanup error: ${error instanceof Error ? error.message : 'Unknown error'}`));
+  }
   
   spinner.succeed('Content generated successfully!');
   console.log(chalk.green(`📅 ${currentDate} - ${selectedAttack.name}`));
