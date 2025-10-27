@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { storeContentInSupabase } from '../../../lib/supabase'
+import { storeContentInSupabase, supabaseAdmin } from '../../../lib/supabase'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
 // Force dynamic rendering for cron jobs
@@ -752,7 +752,7 @@ export async function GET(request: NextRequest) {
       cutoffDate.setDate(cutoffDate.getDate() - 20);
       const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await supabaseAdmin
         .from('daily_content')
         .delete()
         .lt('date', cutoffDateStr);
