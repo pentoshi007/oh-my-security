@@ -1,5 +1,7 @@
-// Your existing content here...
+// other content above
 
-(${attack.searchKeywords.slice(0, 3).map((term: string) => `"${term}"`).join(' OR ')}) AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware OR vulnerability OR exploit)
+    const result = someArray.map((term: string) => {
+        // function body
+    });
 
-// Rest of your existing content here...
+// other content below
