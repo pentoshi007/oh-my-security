@@ -4,8 +4,9 @@ import { notFound } from 'next/navigation'
 import ContentSection from '@/components/ContentSection'
 import Link from 'next/link'
 
-// Revalidate every 5 minutes to ensure fresh content
-export const revalidate = 300
+// Force dynamic rendering to always fetch fresh content
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 interface DayPageProps {
   params: Promise<{

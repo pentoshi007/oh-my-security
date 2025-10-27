@@ -2,8 +2,9 @@ import { getAllContent } from '../../lib/content'
 import Link from 'next/link'
 import ArchiveClient from './ArchiveClient'
 
-// Revalidate every hour to ensure fresh content
-export const revalidate = 3600
+// Force dynamic rendering to always fetch fresh content
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default async function ArchivePage() {
   let archiveContent: any[] = []
