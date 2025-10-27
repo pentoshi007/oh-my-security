@@ -367,7 +367,7 @@ export function getAttackById(id: string): AttackMethodology | undefined {
 // Dynamic attack database that can be updated
 let dynamicAttackDatabase = [...ATTACK_DATABASE];
 
-// Get a random attack that hasn't been used recently
+// Get a random attack that hasn't been used recently with improved selection logic
 export function getNextAttack(recentlyUsedIds: string[]): AttackMethodology {
     const availableAttacks = dynamicAttackDatabase.filter(
         attack => !recentlyUsedIds.includes(attack.id)
@@ -379,7 +379,86 @@ export function getNextAttack(recentlyUsedIds: string[]): AttackMethodology {
         return dynamicAttackDatabase[Math.floor(Math.random() * dynamicAttackDatabase.length)];
     }
 
-    return availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
+    // If very few attacks available, use simple random selection to avoid getting stuck
+    if (availableAttacks.length <= 3) {
+        console.log('⚠️  Very few attacks available, using simple random selection');
+        return availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
+    }
+
+    // Enhanced selection logic to prevent clustering and improve distribution
+    return selectOptimalAttack(availableAttacks, recentlyUsedIds);
+}
+
+// Enhanced attack selection algorithm
+function selectOptimalAttack(availableAttacks: AttackMethodology[], recentlyUsedIds: string[]): AttackMethodology {
+    // Get recent attacks for analysis
+    const recentAttacks = recentlyUsedIds
+        .map(id => dynamicAttackDatabase.find(attack => attack.id === id))
+        .filter(Boolean) as AttackMethodology[];
+
+    // Calculate category distribution in recent history
+    const categoryCounts = new Map<string, number>();
+    recentAttacks.forEach(attack => {
+        const count = categoryCounts.get(attack.category) || 0;
+        categoryCounts.set(attack.category, count + 1);
+    });
+
+    // Calculate difficulty distribution in recent history
+    const difficultyCounts = new Map<string, number>();
+    recentAttacks.forEach(attack => {
+        const count = difficultyCounts.get(attack.difficulty) || 0;
+        difficultyCounts.set(attack.difficulty, count + 1);
+    });
+
+    // Calculate weights for each available attack
+    const attackWeights = availableAttacks.map(attack => {
+        let weight = 1.0;
+
+        // Moderate penalty for attacks from over-represented categories
+        const recentCategoryCount = categoryCounts.get(attack.category) || 0;
+        const categoryPenalty = Math.pow(0.7, recentCategoryCount); // Less aggressive penalty
+        weight *= categoryPenalty;
+
+        // Small bonus for attacks from under-represented categories (only if we have enough history)
+        const totalRecent = recentAttacks.length;
+        if (totalRecent > 10) {
+            const categoryRatio = recentCategoryCount / totalRecent;
+            if (categoryRatio < 0.15) { // If category is under-represented
+                weight *= 1.2; // Smaller bonus
+            }
+        }
+
+        // Moderate preference for different difficulty levels
+        const recentDifficultyCount = difficultyCounts.get(attack.difficulty) || 0;
+        const difficultyPenalty = Math.pow(0.85, recentDifficultyCount);
+        weight *= difficultyPenalty;
+
+        // Add some randomness to prevent getting stuck
+        weight *= (0.8 + Math.random() * 0.4); // Random factor between 0.8 and 1.2
+
+        return { attack, weight };
+    });
+
+    // Normalize weights
+    const totalWeight = attackWeights.reduce((sum, item) => sum + item.weight, 0);
+    const normalizedWeights = attackWeights.map(item => ({
+        ...item,
+        weight: item.weight / totalWeight
+    }));
+
+    // Weighted random selection
+    const random = Math.random();
+    let cumulativeWeight = 0;
+
+    for (const item of normalizedWeights) {
+        cumulativeWeight += item.weight;
+        if (random <= cumulativeWeight) {
+            return item.attack;
+        }
+    }
+
+    // Fallback to last item (shouldn't happen)
+    return normalizedWeights[normalizedWeights.length - 1].attack;
 }
 
 // Search for attacks by keywords
