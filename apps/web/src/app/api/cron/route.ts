@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { storeContentInSupabase } from '../../../lib/supabase'
+import { storeContentInSupabase, supabaseAdmin } from '../../../lib/supabase'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
 // Force dynamic rendering for cron jobs
@@ -742,6 +742,56 @@ export async function GET(request: NextRequest) {
       }
     } else {
       console.log('📦 Skipping filesystem backup in production (Supabase is primary storage)');
+    }
+
+    // Clean up old content to maintain 20-day retention
+    mockSpinner.start('Cleaning up old content...');
+    try {
+      // Clean up old Supabase content
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 20);
+      const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+
+      const { error: deleteError } = await supabaseAdmin
+        .from('daily_content')
+        .delete()
+        .lt('date', cutoffDateStr);
+
+      if (deleteError) {
+        throw new Error(`Supabase cleanup failed: ${deleteError.message}`);
+      }
+
+      // Also clean up filesystem if in development
+      if (process.env.NODE_ENV === 'development') {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+
+        try {
+          const contentDir = path.join(process.cwd(), 'content');
+          const files = await fs.readdir(contentDir);
+          const jsonFiles = files.filter(file => file.endsWith('.json') && file !== '.generation-history.json');
+          
+          let deletedCount = 0;
+          for (const file of jsonFiles) {
+            const fileDate = new Date(file.replace('.json', ''));
+            if (fileDate < cutoffDate) {
+              await fs.unlink(path.join(contentDir, file));
+              deletedCount++;
+            }
+          }
+          
+          if (deletedCount > 0) {
+            console.log(`🗑️  Cleaned up ${deletedCount} old filesystem files`);
+          }
+        } catch (fsError) {
+          console.log('⚠️  Filesystem cleanup failed (Supabase cleanup succeeded)');
+        }
+      }
+
+      mockSpinner.succeed('Old content cleaned up successfully');
+    } catch (cleanupError) {
+      mockSpinner.warn('Content cleanup failed (content still generated)');
+      console.error('Cleanup error:', cleanupError);
     }
 
     const duration = Date.now() - startTime;

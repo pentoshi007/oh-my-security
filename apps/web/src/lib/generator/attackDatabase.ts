@@ -177,16 +177,16 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
         difficulty: 'Low',
         impacts: ['Account Compromise', 'Unauthorized Access', 'Data Breach']
     },
-    {
-        id: 'privilege-escalation',
-        name: 'Privilege Escalation',
-        category: 'Access Control Attacks',
-        description: 'Gaining elevated access to resources',
-        searchKeywords: ['privilege escalation', 'admin access', 'root access', 'elevation of privilege'],
-        aliases: ['Vertical Privilege Escalation', 'Horizontal Privilege Escalation'],
-        difficulty: 'High',
-        impacts: ['System Compromise', 'Data Access', 'Persistence']
-    },
+        {
+            id: 'privilege-escalation',
+            name: 'Privilege Escalation',
+            category: 'Access Control Attacks',
+            description: 'Gaining elevated access to resources',
+            searchKeywords: ['privilege escalation attack', 'admin access exploit', 'root access vulnerability', 'elevation of privilege exploit', 'privilege escalation vulnerability'],
+            aliases: ['Vertical Privilege Escalation', 'Horizontal Privilege Escalation'],
+            difficulty: 'High',
+            impacts: ['System Compromise', 'Data Access', 'Persistence']
+        },
     {
         id: 'session-hijacking',
         name: 'Session Hijacking',
