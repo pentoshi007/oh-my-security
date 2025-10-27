@@ -189,7 +189,7 @@ export async function generateAndSaveContent(spinner: Ora) {
   await writeFile(filePath, JSON.stringify(validatedContent, null, 2), 'utf-8');
   
   // Update history
-  await historyTracker.addAttackId(selectedAttack.id);
+  await historyTracker.addAttackId(selectedAttack.id, selectedAttack.category, selectedAttack.difficulty);
   
   spinner.succeed('Content generated successfully!');
   console.log(chalk.green(`📅 ${currentDate} - ${selectedAttack.name}`));
