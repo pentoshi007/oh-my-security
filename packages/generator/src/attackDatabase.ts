@@ -182,7 +182,7 @@ export const ATTACK_DATABASE: AttackMethodology[] = [
     name: 'Privilege Escalation',
     category: 'Access Control Attacks',
     description: 'Gaining elevated access to resources',
-    searchKeywords: ['privilege escalation', 'admin access', 'root access', 'elevation of privilege'],
+    searchKeywords: ['privilege escalation attack', 'admin access exploit', 'root access vulnerability', 'elevation of privilege exploit', 'privilege escalation vulnerability'],
     aliases: ['Vertical Privilege Escalation', 'Horizontal Privilege Escalation'],
     difficulty: 'High',
     impacts: ['System Compromise', 'Data Access', 'Persistence']

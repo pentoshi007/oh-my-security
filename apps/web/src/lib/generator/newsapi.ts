@@ -19,9 +19,9 @@ export class NewsAPIService {
         // Try multiple search strategies to find relevant articles
         const searchStrategies = [
             // Strategy 1: Exact attack name with cybersecurity context
-            `"${attack.name}" AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware)`,
-            // Strategy 2: Primary search keywords with cybersecurity context
-            `(${attack.searchKeywords.slice(0, 3).map(term => `"${term}"`).join(' OR ')}) AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware)`,
+            `"${attack.name}" AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware OR vulnerability OR exploit)`,
+            // Strategy 2: Primary search keywords with cybersecurity context (more specific)
+            `(${attack.searchKeywords.slice(0, 3).map(term => `"${term}"`).join(' OR ')}) AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware OR vulnerability OR exploit)`,
             // Strategy 3: Broader search with attack name and category
             `"${attack.name}" AND "${attack.category.toLowerCase()}"`,
             // Strategy 4: Fallback to general cybersecurity news if specific searches fail
@@ -139,13 +139,20 @@ export class NewsAPIService {
             if (descLower.includes(alias.toLowerCase())) score += 4;
         });
         
-        // Check for search keywords with varying weights
+        // Check for search keywords with context-aware scoring
         attack.searchKeywords.forEach((keyword, index) => {
             const keywordLower = keyword.toLowerCase();
             const weight = Math.max(1, 4 - index); // First 3 keywords get higher weight
             
-            if (titleLower.includes(keywordLower)) score += weight * 2;
-            if (descLower.includes(keywordLower)) score += weight;
+            // Check if keyword appears in cybersecurity context
+            const hasCybersecurityContext = this.hasCybersecurityContext(fullText, keywordLower);
+            
+            if (titleLower.includes(keywordLower)) {
+                score += hasCybersecurityContext ? weight * 2 : weight; // Reduced score without context
+            }
+            if (descLower.includes(keywordLower)) {
+                score += hasCybersecurityContext ? weight : Math.floor(weight / 2); // Reduced score without context
+            }
         });
         
         // Check for category-related terms
@@ -174,21 +181,58 @@ export class NewsAPIService {
             score += 3;
         }
         
-        // Penalty for irrelevant terms (to reduce false positives)
+        // Heavy penalty for irrelevant terms and contexts
         const irrelevantTerms = ['sports', 'entertainment', 'politics', 'weather', 'celebrity', 'gossip'];
         if (irrelevantTerms.some(term => fullText.includes(term))) {
-            score -= 5;
+            score -= 10; // Increased penalty
+        }
+        
+        // Heavy penalty for legal/medical contexts that might match keywords incorrectly
+        const nonCybersecurityContexts = [
+            'attorney-client privilege', 'legal privilege', 'medical privilege', 'doctor-patient privilege',
+            'court upholds', 'legal case', 'lawsuit', 'litigation', 'legal proceedings',
+            'medical malpractice', 'healthcare', 'insurance', 'financial services'
+        ];
+        if (nonCybersecurityContexts.some(context => fullText.includes(context))) {
+            score -= 15; // Heavy penalty for non-cybersecurity contexts
         }
         
         // Bonus for articles that mention both the attack type and cybersecurity context
-        const cybersecurityContext = ['cybersecurity', 'cyber attack', 'security breach', 'data breach', 'hacking', 'malware', 'vulnerability'];
+        const cybersecurityContext = ['cybersecurity', 'cyber attack', 'security breach', 'data breach', 'hacking', 'malware', 'vulnerability', 'exploit', 'penetration', 'intrusion'];
         const hasCybersecurityContext = cybersecurityContext.some(term => fullText.includes(term));
         const hasAttackMention = attack.name.toLowerCase().split(' ').some(word => fullText.includes(word));
         
         if (hasAttackMention && hasCybersecurityContext) {
-            score += 5;
+            score += 8; // Increased bonus for proper context
+        }
+        
+        // Additional penalty if article has attack keywords but no cybersecurity context
+        if (hasAttackMention && !hasCybersecurityContext) {
+            score -= 5; // Penalty for misleading matches
         }
         
         return Math.max(0, score); // Ensure non-negative score
+    }
+
+    /**
+     * Check if a keyword appears in cybersecurity context
+     */
+    private hasCybersecurityContext(text: string, keyword: string): boolean {
+        const cybersecurityTerms = [
+            'cybersecurity', 'cyber attack', 'security breach', 'data breach', 'hacking', 
+            'malware', 'vulnerability', 'exploit', 'penetration', 'intrusion', 'threat',
+            'attack', 'compromise', 'incident', 'security', 'cyber', 'hacker'
+        ];
+        
+        // Find the position of the keyword
+        const keywordIndex = text.indexOf(keyword);
+        if (keywordIndex === -1) return false;
+        
+        // Check for cybersecurity terms within 100 characters before or after the keyword
+        const contextStart = Math.max(0, keywordIndex - 100);
+        const contextEnd = Math.min(text.length, keywordIndex + keyword.length + 100);
+        const context = text.substring(contextStart, contextEnd);
+        
+        return cybersecurityTerms.some(term => context.includes(term));
     }
 }
