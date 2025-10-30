@@ -13,7 +13,7 @@ node_modules
 
 # Build and Dist
 /dist
-/.next/
+.next/
 /out/
 /build/
 *.tsbuildinfo
