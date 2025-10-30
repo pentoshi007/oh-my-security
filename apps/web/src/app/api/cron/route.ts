@@ -280,33 +280,36 @@ class NewsAPIService {
 
   async fetchNewsForAttack(attack: any) {
     try {
-      // Try multiple search strategies to find relevant articles
+      console.log(`🔍 Searching news for: ${attack.name}`);
+
+      // Try multiple search strategies - ONLY topic-specific searches, NO generic fallback
       const searchStrategies = [
         // Strategy 1: Exact attack name with cybersecurity context
-        `"${attack.name}" AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware OR vulnerability OR exploit)`,
-        // Strategy 2: Primary search keywords with cybersecurity context (more specific)
-        `(${attack.searchKeywords.slice(0, 3).map((term: string) => `"${term}"`).join(' OR ')}) AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware OR vulnerability OR exploit)`,
+        `"${attack.name}" AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware OR vulnerability OR exploit OR threat)`,
+        // Strategy 2: Primary search keywords with cybersecurity context (most specific)
+        `(${attack.searchKeywords.slice(0, 2).map((term: string) => `"${term}"`).join(' OR ')}) AND (cybersecurity OR "cyber attack" OR breach OR hacking OR vulnerability)`,
         // Strategy 3: Broader search with attack name and category
-        `"${attack.name}" AND "${attack.category.toLowerCase()}"`,
-        // Strategy 4: Fallback to general cybersecurity news if specific searches fail
-        'cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware'
+        `"${attack.name}" AND "${attack.category.toLowerCase()}"`
       ];
 
       let allArticles: any[] = [];
       const seenUrls = new Set<string>();
 
       // Try each search strategy
-      for (const query of searchStrategies) {
+      for (let i = 0; i < searchStrategies.length; i++) {
+        const query = searchStrategies[i];
         try {
+          console.log(`  Strategy ${i + 1}: ${query.substring(0, 100)}...`);
           const response = await fetch(
-            `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=15&from=${this.getDateDaysAgo(14)}&apiKey=${this.apiKey}`
+            `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=20&from=${this.getDateDaysAgo(30)}&apiKey=${this.apiKey}`
           );
           const data = await response.json();
 
-          if (data.status === 'ok') {
+          if (data.status === 'ok' && data.articles) {
+            console.log(`  Found ${data.articles.length} articles`);
             // Add unique articles
             data.articles.forEach((article: any) => {
-              if (article.url && !seenUrls.has(article.url) && 
+              if (article.url && !seenUrls.has(article.url) &&
                   article.title && article.description &&
                   !article.title.includes('[Removed]') &&
                   !article.description.includes('[Removed]')) {
@@ -314,29 +317,47 @@ class NewsAPIService {
                 seenUrls.add(article.url);
               }
             });
+          } else {
+            console.log(`  Strategy ${i + 1} returned no results`);
           }
         } catch (strategyError) {
-          console.log(`Search strategy failed: ${query}`, strategyError);
+          console.log(`  Strategy ${i + 1} failed:`, strategyError);
           continue;
         }
 
-        // If we have enough relevant articles, stop trying more strategies
-        if (allArticles.length >= 10) {
+        // If we have enough candidate articles, stop trying more strategies
+        if (allArticles.length >= 30) {
           break;
         }
       }
 
-      // Score and filter articles for relevance
+      console.log(`📊 Total candidate articles: ${allArticles.length}`);
+
+      // Score and filter articles for relevance - STRICT MATCHING
       const scoredArticles = allArticles
         .map(article => {
           const score = this.scoreArticleRelevance(article, attack);
-          return { article, score };
+          return { article, score, title: article.title };
         })
-        .filter(item => item.score > 0) // Only accept articles that meet strict requirements
+        .filter(item => {
+          if (item.score > 0) {
+            console.log(`  ✓ Matched (score ${item.score}): ${item.title.substring(0, 80)}...`);
+            return true;
+          }
+          return false;
+        })
         .sort((a, b) => b.score - a.score); // Sort by relevance
 
-      // Return top 5 most relevant articles
-      return scoredArticles.slice(0, 5).map(item => item.article);
+      console.log(`✅ Final relevant articles: ${scoredArticles.length}`);
+
+      // Return top 5 most relevant articles - if none found, return empty array
+      const topArticles = scoredArticles.slice(0, 5).map(item => item.article);
+
+      if (topArticles.length === 0) {
+        console.log(`⚠️ No relevant articles found for ${attack.name}`);
+      }
+
+      return topArticles;
     } catch (error) {
       console.error('Failed to fetch news:', error);
       return [];
@@ -344,154 +365,202 @@ class NewsAPIService {
   }
 
   /**
-   * Score article relevance to the attack methodology - STRICT MATCHING
-   * Requires both exact topic match AND cybersecurity context
+   * Score article relevance to the attack methodology - ULTRA STRICT MATCHING
+   * Article MUST contain attack name/keywords in title OR description AND have cybersecurity context
    */
   private scoreArticleRelevance(article: any, attack: any): number {
     const titleLower = article.title.toLowerCase();
     const descLower = (article.description || '').toLowerCase();
-    const contentLower = (article.content || '').toLowerCase();
-    const fullText = `${titleLower} ${descLower} ${contentLower}`;
-    
-    // MANDATORY REQUIREMENTS - Article must have BOTH:
-    // 1. Exact attack name or alias match
-    // 2. Strong cybersecurity context
-    
-    const hasExactAttackMatch = this.hasExactAttackMatch(fullText, attack);
-    const hasStrongCybersecurityContext = this.hasStrongCybersecurityContext(fullText);
-    
-    // REJECT if either requirement is missing
-    if (!hasExactAttackMatch || !hasStrongCybersecurityContext) {
+    const titleAndDesc = `${titleLower} ${descLower}`;
+
+    // CRITICAL REQUIREMENT: Attack topic MUST be mentioned in title or description
+    // We don't accept articles where the topic is only buried in content
+    const hasAttackInTitleOrDesc = this.hasExactAttackMatch(titleAndDesc, attack);
+
+    if (!hasAttackInTitleOrDesc) {
+      // Topic not in title/description - REJECT immediately
       return 0;
     }
-    
-    // If both requirements are met, calculate detailed score
-    let score = 50; // Base score for meeting requirements
-    
-    // Exact attack name in title gets highest priority
-    if (titleLower.includes(attack.name.toLowerCase())) {
-      score += 20;
+
+    // MANDATORY REQUIREMENT: Must have strong cybersecurity context
+    const hasStrongCybersecurityContext = this.hasStrongCybersecurityContext(titleAndDesc);
+
+    if (!hasStrongCybersecurityContext) {
+      // No cybersecurity context - REJECT
+      return 0;
     }
-    
-    // Check for aliases with high weight
+
+    // Both requirements met - calculate detailed relevance score
+    let score = 100; // Base score for meeting strict requirements
+
+    // PRIORITY 1: Attack name in TITLE gets highest boost
+    if (titleLower.includes(attack.name.toLowerCase())) {
+      score += 50;
+    }
+
+    // PRIORITY 2: Check for aliases in title
     if (attack.aliases) {
       attack.aliases.forEach((alias: string) => {
         if (titleLower.includes(alias.toLowerCase())) {
-          score += 15;
+          score += 40;
         }
       });
     }
-    
-    // Boost for search keywords in title (with cybersecurity context already verified)
-    attack.searchKeywords.forEach((keyword: string, index: number) => {
+
+    // PRIORITY 3: Primary search keywords in title
+    attack.searchKeywords.slice(0, 3).forEach((keyword: string, index: number) => {
       const keywordLower = keyword.toLowerCase();
-      const weight = Math.max(2, 6 - index); // Higher weights for first keywords
-      
+      const titleWeight = 30 - (index * 5); // 30, 25, 20
+      const descWeight = 15 - (index * 3); // 15, 12, 9
+
       if (titleLower.includes(keywordLower)) {
-        score += weight * 2;
-      }
-      if (descLower.includes(keywordLower)) {
-        score += weight;
+        score += titleWeight;
+      } else if (descLower.includes(keywordLower)) {
+        score += descWeight;
       }
     });
-    
-    // Boost for impact-related terms in title
-    if (attack.impacts) {
-      attack.impacts.forEach((impact: string) => {
-        const impactLower = impact.toLowerCase();
-        if (titleLower.includes(impactLower)) {
-          score += 5;
-        }
-      });
+
+    // PRIORITY 4: Attack name in description (if not in title)
+    if (!titleLower.includes(attack.name.toLowerCase()) && descLower.includes(attack.name.toLowerCase())) {
+      score += 25;
     }
-    
-    // Boost for recent articles
+
+    // PRIORITY 5: Boost for recent articles
     const articleDate = new Date(article.publishedAt);
     const daysSincePublished = (Date.now() - articleDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSincePublished < 1) score += 8;
-    else if (daysSincePublished < 3) score += 6;
-    else if (daysSincePublished < 7) score += 4;
-    else if (daysSincePublished < 14) score += 2;
-    
-    // Boost for reputable cybersecurity sources
+    if (daysSincePublished < 7) score += 20;
+    else if (daysSincePublished < 14) score += 15;
+    else if (daysSincePublished < 21) score += 10;
+    else if (daysSincePublished < 30) score += 5;
+
+    // PRIORITY 6: Reputable cybersecurity sources
     const cybersecuritySources = [
-      'reuters', 'bbc', 'cnn', 'techcrunch', 'wired', 'ars technica', 'zdnet', 
+      'reuters', 'bbc', 'cnn', 'techcrunch', 'wired', 'ars technica', 'zdnet',
       'bleeping computer', 'the hacker news', 'krebs on security', 'dark reading',
       'security week', 'threat post', 'infosecurity magazine', 'cyber security news',
-      'cso online', 'security boulevard', 'help net security', 'it security guru'
+      'cso online', 'security boulevard', 'help net security', 'it security guru',
+      'security affairs', 'hackread', 'cybersecurity insiders'
     ];
-    if (cybersecuritySources.some(source => 
+    if (cybersecuritySources.some(source =>
       article.source.name.toLowerCase().includes(source)
     )) {
-      score += 10;
+      score += 15;
     }
-    
+
     return score;
   }
-  
+
   /**
-   * Check if article has exact attack name or alias match
+   * Check if article mentions the specific attack name, aliases, or primary keywords
+   * Now checks for word boundaries to avoid false matches
    */
   private hasExactAttackMatch(text: string, attack: any): boolean {
     const textLower = text.toLowerCase();
+
+    // Helper to check with word boundaries
+    const containsPhrase = (haystack: string, needle: string): boolean => {
+      // For multi-word phrases, check exact substring
+      if (needle.includes(' ')) {
+        return haystack.includes(needle);
+      }
+      // For single words, check with word boundaries
+      const regex = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      return regex.test(haystack);
+    };
+
+    // Check for attack name
     const attackNameLower = attack.name.toLowerCase();
-    
-    // Check for exact attack name
-    if (textLower.includes(attackNameLower)) {
+    if (containsPhrase(textLower, attackNameLower)) {
       return true;
     }
-    
+
     // Check for aliases
-    if (attack.aliases) {
-      return attack.aliases.some((alias: string) => 
-        textLower.includes(alias.toLowerCase())
-      );
+    if (attack.aliases && attack.aliases.length > 0) {
+      for (const alias of attack.aliases) {
+        if (containsPhrase(textLower, alias.toLowerCase())) {
+          return true;
+        }
+      }
     }
-    
+
+    // Check for primary search keywords (at least 2 must match)
+    const keywordMatches = attack.searchKeywords.slice(0, 4).filter((keyword: string) =>
+      containsPhrase(textLower, keyword.toLowerCase())
+    ).length;
+
+    // Require at least 2 primary keywords to match
+    if (keywordMatches >= 2) {
+      return true;
+    }
+
     return false;
   }
   
   /**
    * Check if article has strong cybersecurity context
-   * Requires multiple cybersecurity terms to ensure relevance
+   * Must contain multiple security-related terms to confirm it's a security article
    */
   private hasStrongCybersecurityContext(text: string): boolean {
-    const cybersecurityTerms = [
-      'cybersecurity', 'cyber attack', 'cyber threat', 'cyber security',
-      'security breach', 'data breach', 'security incident', 'security vulnerability',
-      'hacking', 'hacker', 'hacked', 'malware', 'ransomware', 'trojan', 'virus',
-      'vulnerability', 'exploit', 'penetration', 'intrusion', 'compromise',
-      'threat actor', 'threat intelligence', 'security researcher', 'security expert',
-      'information security', 'network security', 'data security', 'cyber defense',
-      'incident response', 'forensics', 'security audit', 'security assessment',
-      'cybercrime', 'digital forensics', 'threat hunting', 'security operations',
-      'security monitoring', 'threat detection', 'security awareness'
+    const textLower = text.toLowerCase();
+
+    // Primary cybersecurity indicators (strong signals)
+    const primaryTerms = [
+      'cybersecurity', 'cyber security', 'cyber attack', 'cyber threat',
+      'security breach', 'data breach', 'security incident',
+      'hacking', 'hacker', 'hacked',
+      'malware', 'ransomware', 'trojan',
+      'vulnerability', 'exploit',
+      'threat actor', 'security researcher',
+      'cybercrime', 'cyberattack'
     ];
-    
-    // Count how many cybersecurity terms appear in the text
-    const termCount = cybersecurityTerms.filter(term => 
-      text.toLowerCase().includes(term)
-    ).length;
-    
-    // Require at least 2 cybersecurity terms for strong context
-    // BUT exclude articles that are primarily about legal/medical contexts
-    const nonCybersecurityContexts = [
-      'attorney-client privilege', 'legal privilege', 'medical privilege', 
-      'doctor-patient privilege', 'court upholds', 'legal case', 'lawsuit', 
-      'litigation', 'legal proceedings', 'medical malpractice', 'healthcare law',
-      'legal liability', 'legal implications', 'court ruling', 'legal precedent'
+
+    // Secondary security terms (supporting signals)
+    const secondaryTerms = [
+      'security', 'attack', 'breach', 'threat', 'vulnerability',
+      'compromise', 'intrusion', 'penetration',
+      'patch', 'zero-day', 'backdoor',
+      'phishing', 'credential', 'authentication',
+      'encryption', 'firewall', 'antivirus'
     ];
-    
-    const hasNonCybersecurityContext = nonCybersecurityContexts.some(context => 
-      text.toLowerCase().includes(context)
-    );
-    
-    // If article has strong non-cybersecurity context, reject it even if it has some cybersecurity terms
-    if (hasNonCybersecurityContext) {
-      return false;
+
+    // Exclude articles that are NOT about cybersecurity
+    const excludeContexts = [
+      // Legal contexts
+      'attorney-client privilege', 'legal privilege', 'court case', 'lawsuit',
+      'litigation', 'court ruling', 'legal precedent', 'judge ruled',
+      // Medical/health contexts
+      'medical', 'healthcare', 'hospital', 'patient privacy', 'hipaa',
+      // Physical security contexts
+      'border security', 'national security advisor', 'homeland security',
+      'social security', 'job security', 'food security',
+      // Financial contexts (unless explicitly cyber-related)
+      'securities and exchange', 'financial security'
+    ];
+
+    // Check for exclusion contexts first
+    for (const excludeContext of excludeContexts) {
+      if (textLower.includes(excludeContext)) {
+        // Only reject if it doesn't also have strong cybersecurity terms
+        const hasCyberTerm = primaryTerms.some(term => textLower.includes(term));
+        if (!hasCyberTerm) {
+          return false;
+        }
+      }
     }
-    
-    return termCount >= 2;
+
+    // Count primary cybersecurity term matches
+    const primaryMatches = primaryTerms.filter(term => textLower.includes(term)).length;
+
+    // If we have at least 1 primary term, it's likely a cybersecurity article
+    if (primaryMatches >= 1) {
+      return true;
+    }
+
+    // Otherwise, require multiple secondary terms to indicate security context
+    const secondaryMatches = secondaryTerms.filter(term => textLower.includes(term)).length;
+
+    // Need at least 3 secondary security terms if no primary terms
+    return secondaryMatches >= 3;
   }
 
 
