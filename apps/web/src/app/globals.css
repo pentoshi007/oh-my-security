@@ -5,6 +5,7 @@
 html,
 body {
     @apply bg-white text-gray-800;
+    font-family: 'Sora', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv11', 'ss01';
     scroll-behavior: smooth;
     background-color: #f8fafc;
