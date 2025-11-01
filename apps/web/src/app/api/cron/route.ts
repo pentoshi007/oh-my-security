@@ -841,8 +841,7 @@ EXPLOIT CODE SECTION:
 
 // Real content generation function
 async function generateDailyContent() {
-  // Use NewsData.io API key - fallback to hardcoded key for production
-  const newsDataApiKey = process.env.NEWSDATA_API_KEY || 'pub_f8404d9815e1434eac1968f79fc3cd21';
+  const newsDataApiKey = process.env.NEWSDATA_API_KEY;
   const googleApiKey = process.env.GOOGLE_API_KEY || process.env.HF_TOKEN;
 
   if (!newsDataApiKey || !googleApiKey) {
