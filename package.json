@@ -4,20 +4,14 @@
   "description": "A fully-automated, zero-cost website that publishes a fresh, structured breakdown of a real-world cyber-attack every day.",
   "private": true,
   "workspaces": [
-    "packages/*",
     "apps/*"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
     "start": "npm run start --workspace=apps/web",
-    "generate": "npm run start --workspace=packages/generator",
-    "cleanup": "node cleanup-content.js",
-    "cleanup:dry-run": "node cleanup-content.js --dry-run --verbose",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
-    "test": "npm run test --workspaces",
-    "fix-dev": "cd apps/web && rm -rf .next && npm run dev",
-    "fresh-start": "cd apps/web && rm -rf .next node_modules && npm install && npm run dev"
+    "test": "npm run test --workspaces"
   },
   "repository": {
     "type": "git",
