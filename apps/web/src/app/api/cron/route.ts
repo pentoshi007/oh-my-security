@@ -266,16 +266,16 @@ const createMockSpinner = (operation: string) => ({
 
 const mockSpinner = createMockSpinner('CRON');
 
-// NewsAPI service with proper relevance scoring
-class NewsAPIService {
+// NewsData.io service with proper relevance scoring
+class NewsDataService {
   constructor(private apiKey: string) { }
 
   async fetchCybersecurityNews() {
     const response = await fetch(
-      `https://newsapi.org/v2/everything?q=cybersecurity OR "cyber attack" OR hacking OR "data breach"&sortBy=publishedAt&pageSize=20&apiKey=${this.apiKey}`
+      `https://newsdata.io/api/1/news?apikey=${this.apiKey}&q=cybersecurity OR cyber attack OR hacking OR data breach&language=en&size=10`
     );
     const data = await response.json();
-    return data.articles || [];
+    return data.results || [];
   }
 
   async fetchNewsForAttack(attack: any) {
@@ -283,13 +283,14 @@ class NewsAPIService {
       console.log(`🔍 Searching news for: ${attack.name}`);
 
       // Try multiple search strategies - ONLY topic-specific searches, NO generic fallback
+      // newsdata.io uses simpler query syntax than NewsAPI
       const searchStrategies = [
         // Strategy 1: Exact attack name with cybersecurity context
-        `"${attack.name}" AND (cybersecurity OR "cyber attack" OR "security breach" OR "data breach" OR hacking OR malware OR vulnerability OR exploit OR threat)`,
-        // Strategy 2: Primary search keywords with cybersecurity context (most specific)
-        `(${attack.searchKeywords.slice(0, 2).map((term: string) => `"${term}"`).join(' OR ')}) AND (cybersecurity OR "cyber attack" OR breach OR hacking OR vulnerability)`,
-        // Strategy 3: Broader search with attack name and category
-        `"${attack.name}" AND "${attack.category.toLowerCase()}"`
+        `${attack.name} cybersecurity`,
+        // Strategy 2: Primary search keywords
+        attack.searchKeywords.slice(0, 2).join(' '),
+        // Strategy 3: Attack name with category
+        `${attack.name} ${attack.category.toLowerCase()}`
       ];
 
       let allArticles: any[] = [];
@@ -301,24 +302,35 @@ class NewsAPIService {
         try {
           console.log(`  Strategy ${i + 1}: ${query.substring(0, 100)}...`);
           const response = await fetch(
-            `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=20&from=${this.getDateDaysAgo(30)}&apiKey=${this.apiKey}`
+            `https://newsdata.io/api/1/news?apikey=${this.apiKey}&q=${encodeURIComponent(query)}&language=en&size=10`
           );
           const data = await response.json();
 
-          if (data.status === 'ok' && data.articles) {
-            console.log(`  Found ${data.articles.length} articles`);
-            // Add unique articles
-            data.articles.forEach((article: any) => {
-              if (article.url && !seenUrls.has(article.url) &&
+          if (data.status === 'success' && data.results) {
+            console.log(`  Found ${data.results.length} articles`);
+            // Add unique articles - newsdata.io uses 'link' instead of 'url'
+            data.results.forEach((article: any) => {
+              if (article.link && !seenUrls.has(article.link) &&
                   article.title && article.description &&
                   !article.title.includes('[Removed]') &&
                   !article.description.includes('[Removed]')) {
-                allArticles.push(article);
-                seenUrls.add(article.url);
+                // Normalize article format to match our processing
+                const normalizedArticle = {
+                  url: article.link,
+                  title: article.title,
+                  description: article.description,
+                  content: article.content || '',
+                  publishedAt: article.pubDate,
+                  source: {
+                    name: article.source_id || 'Unknown'
+                  }
+                };
+                allArticles.push(normalizedArticle);
+                seenUrls.add(article.link);
               }
             });
           } else {
-            console.log(`  Strategy ${i + 1} returned no results`);
+            console.log(`  Strategy ${i + 1} returned no results or error:`, data.status);
           }
         } catch (strategyError) {
           console.log(`  Strategy ${i + 1} failed:`, strategyError);
@@ -326,9 +338,12 @@ class NewsAPIService {
         }
 
         // If we have enough candidate articles, stop trying more strategies
-        if (allArticles.length >= 30) {
+        if (allArticles.length >= 20) {
           break;
         }
+
+        // Add delay between API calls to avoid rate limiting (newsdata.io has stricter limits)
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       console.log(`📊 Total candidate articles: ${allArticles.length}`);
@@ -826,14 +841,15 @@ EXPLOIT CODE SECTION:
 
 // Real content generation function
 async function generateDailyContent() {
-  const newsApiKey = process.env.NEWS_API_KEY;
+  // Use NewsData.io API key - fallback to hardcoded key for production
+  const newsDataApiKey = process.env.NEWSDATA_API_KEY || 'pub_f8404d9815e1434eac1968f79fc3cd21';
   const googleApiKey = process.env.GOOGLE_API_KEY || process.env.HF_TOKEN;
 
-  if (!newsApiKey || !googleApiKey) {
-    throw new Error('Missing required API keys: NEWS_API_KEY and (GOOGLE_API_KEY or HF_TOKEN) must be set');
+  if (!newsDataApiKey || !googleApiKey) {
+    throw new Error('Missing required API keys: NEWSDATA_API_KEY and (GOOGLE_API_KEY or HF_TOKEN) must be set');
   }
 
-  const newsService = new NewsAPIService(newsApiKey);
+  const newsService = new NewsDataService(newsDataApiKey);
   const aiService = new AIContentGenerator(googleApiKey);
 
   // Select next attack methodology (avoid recently used ones)
