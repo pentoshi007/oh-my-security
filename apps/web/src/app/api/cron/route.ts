@@ -275,7 +275,22 @@ class NewsDataService {
       `https://newsdata.io/api/1/news?apikey=${this.apiKey}&q=cybersecurity OR cyber attack OR hacking OR data breach&language=en&size=10`
     );
     const data = await response.json();
-    return data.results || [];
+
+    // Normalize articles to match expected format
+    if (data.status === 'success' && data.results) {
+      return data.results.map((article: any) => ({
+        url: article.link || article.url || '#',
+        title: article.title || 'Untitled',
+        description: article.description || 'No description available',
+        content: article.content || '',
+        publishedAt: article.pubDate || new Date().toISOString(),
+        source: {
+          name: article.source_id || article.source_name || 'Unknown Source'
+        }
+      }));
+    }
+
+    return [];
   }
 
   async fetchNewsForAttack(attack: any) {
@@ -677,16 +692,22 @@ EXPLOIT CODE SECTION:
   }
 
   private createNewsContext(articles: any[]): string {
-    if (articles.length === 0) {
+    if (!articles || articles.length === 0) {
       return 'No recent news articles found for this attack type.';
     }
 
     const topArticles = articles.slice(0, 3);
 
     return topArticles.map((article, index) => {
-      const date = new Date(article.publishedAt).toLocaleDateString();
-      return `${index + 1}. "${article.title}" - ${article.source.name} (${date})
-   Summary: ${article.description}`;
+      // Safely extract properties with fallbacks
+      const title = article?.title || 'Untitled Article';
+      const sourceName = article?.source?.name || 'Unknown Source';
+      const publishedAt = article?.publishedAt || new Date().toISOString();
+      const description = article?.description || 'No description available';
+
+      const date = new Date(publishedAt).toLocaleDateString();
+      return `${index + 1}. "${title}" - ${sourceName} (${date})
+   Summary: ${description}`;
     }).join('\n\n');
   }
 
