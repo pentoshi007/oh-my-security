@@ -12,7 +12,7 @@ export const revalidate = 0
 
 export default async function HomePage() {
   const content = await getLatestContent()
-  const attackCount = 45 // Hardcoded for now, can be made dynamic later
+  const attackCount = 25 // Current attack methodologies in database
 
   return (
     <div className="min-h-screen">
@@ -36,8 +36,8 @@ export default async function HomePage() {
 
           <ScrollAnimationWrapper delay={0.2}>
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Learn from real-world cyber attacks with daily content covering both defensive (blue team)
-              and offensive (red team) perspectives. Stay ahead of the latest threats.
+              Master attack methodologies with AI-powered daily breakdowns covering both defensive (blue team)
+              and offensive (red team) perspectives. Fresh content delivered every morning at 12:01 AM IST.
             </p>
           </ScrollAnimationWrapper>
 
@@ -90,9 +90,9 @@ export default async function HomePage() {
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                   <BookOpen className="w-6 h-6 text-green-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Real-World Cases</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Daily Fresh Content</h3>
                 <p className="text-gray-600">
-                  Study actual cyber attacks and breaches with detailed analysis and lessons learned.
+                  New attack methodology every day with AI-generated analysis and relevant news articles.
                 </p>
               </div>
             </div>
