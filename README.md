@@ -61,7 +61,7 @@ flowchart TD
 |:------|:-----------|
 | **Frontend** | Next.js 15, React, Tailwind CSS, DaisyUI |
 | **Backend** | Next.js API Routes, TypeScript |
-| **AI Generation** | Google Gemini AI (Gemini 1.5 Flash) |
+| **AI Generation** | Google Gemini AI (Gemini 2.5 Flash) |
 | **News API** | newsdata.io with strict relevance matching |
 | **Database** | Supabase (PostgreSQL) for content storage |
 | **Subscriptions** | MongoDB Atlas for email management |
