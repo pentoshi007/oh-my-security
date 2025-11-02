@@ -146,7 +146,7 @@ export default function AboutPage() {
             <div className="text-center">
               <div className="text-purple-600 font-mono text-sm mb-2">AI Generation</div>
               <div className="text-gray-900 font-semibold">Google Gemini</div>
-              <div className="text-gray-600 text-sm">Gemini 1.5 Flash model</div>
+              <div className="text-gray-600 text-sm">Gemini 2.5 Flash model</div>
             </div>
 
             <div className="text-center">
