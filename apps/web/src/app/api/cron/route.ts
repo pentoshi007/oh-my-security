@@ -971,7 +971,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check required environment variables
-    const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'NEWS_API_KEY'];
+    const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'NEWSDATA_API_KEY'];
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
     // Check for AI API key (either Google or HuggingFace)
