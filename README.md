@@ -1,231 +1,291 @@
 # Oh-My-Security (OMS)
 
-A fully-automated, zero-cost website that publishes a fresh, structured breakdown of a real-world cyber-attack every day.
+A fully-automated, zero-cost cybersecurity education platform that delivers fresh, structured breakdowns of real-world attack methodologies every day.
 
-> Because security knowledge should be as fresh as today's headlines.
+> Master cybersecurity one day at a time with AI-powered attack analysis.
 
 ---
 
 ## 💡 About
 
-Oh-My-Security is a daily cybersecurity education platform designed to help security professionals, students, and enthusiasts stay ahead of the latest threats. It analyzes real-world cyber attacks from both defensive (blue team) and offensive (red team) perspectives, providing comprehensive insights into threat detection, incident response, attack vectors, and exploitation techniques.
+Oh-My-Security is a daily cybersecurity education platform that helps security professionals, students, and enthusiasts stay current with the latest attack techniques and defense strategies. Each day features a different attack methodology analyzed from both defensive (blue team) and offensive (red team) perspectives, providing comprehensive insights into threat detection, incident response, attack vectors, and exploitation techniques.
 
-Our mission is to make cybersecurity knowledge accessible and current, ensuring you master cybersecurity one day at a time with real-world attack analysis.
+Our mission is to make cybersecurity knowledge accessible, current, and practical - delivered fresh every day at 12:01 AM IST.
 
 ---
 
 ## ✨ Features
 
-- **Daily Content Pipeline** – Automatically pulls the day's top cybersecurity news, detects attack techniques, generates detailed blue-team (defense) and red-team (offense) write-ups, and stores them in Supabase database.
-- **Modern Next.js Front-end** – A stylish and responsive user interface built with Next.js, featuring distinct blue sections for defense strategies and red sections for offensive methodologies.
-- **Enhanced Archive System** – Powerful archive with real-time search, filtering by category, and sorting options. Browse all content with instant results.
-- **Supabase Database Storage** – Reliable content storage in Supabase with instant access, no git conflicts, and better performance than file-based storage.
-- **Email Subscription System** – MongoDB-powered subscription system allowing users to subscribe for updates and notifications.
-- **Automated Vercel Cron Jobs** – Scheduled cron jobs generate new daily content directly on the server, storing in database for instant availability.
-- **Free-tier Infrastructure** – Leverages free-tier services including NewsAPI, Google Gemini AI, Supabase database, MongoDB Atlas, and Vercel hosting.
+- **Automated Daily Content** – Vercel cron job runs daily at 12:01 AM IST, generating fresh content about a different attack methodology using Google Gemini AI
+- **Modern Next.js Frontend** – Responsive UI built with Next.js 15, Tailwind CSS, and DaisyUI, featuring distinct blue sections for defense and red sections for offense
+- **25+ Attack Methodologies** – Comprehensive database covering SQL injection, XSS, ransomware, phishing, and 20+ other attack types
+- **Strict News Relevance** – Powered by newsdata.io with ultra-strict matching to ensure articles specifically match the daily attack topic
+- **Enhanced Archive System** – Real-time search, filtering by category, sorting options, and instant results for browsing all past content
+- **Supabase Database** – Lightning-fast content storage and retrieval with PostgreSQL, no git conflicts
+- **Email Subscriptions** – MongoDB-powered subscription system for daily updates and notifications
+- **100% Free Infrastructure** – Leverages free-tier services: newsdata.io, Google Gemini AI, Supabase, MongoDB Atlas, and Vercel
 
 ---
 
 ## 🚀 How It Works
 
-Oh-My-Security operates on a fully automated pipeline to deliver fresh cybersecurity content daily:
+Oh-My-Security operates on a fully automated pipeline:
 
-1.  **Daily Cron Job**: A Vercel cron job runs daily at 12:00 PM UTC (6:00 PM IST), triggering the `/api/cron` endpoint.
-2.  **Content Generation**: The content generator executes serverlessly using methodology-driven approach:
-    - Selects next attack methodology from comprehensive database (32+ attack types).
-    - Fetches relevant cybersecurity headlines using NewsAPI with targeted search.
-    - Utilizes Google Gemini AI to generate structured content with blue-team and red-team perspectives.
-3.  **Database Storage**: Content is immediately stored in Supabase database with full metadata and searchable fields.
-4.  **Real-time Access**: Content is instantly available through API endpoints without redeployment or git operations.
-5.  **Enhanced Archive**: Users can search, filter, and sort through all content with real-time results via the modern web interface.
+1. **Daily Cron Job**: Vercel cron runs at 12:01 AM IST (6:31 PM UTC), triggering `/api/cron`
+2. **Attack Selection**: Intelligently selects next attack from 25+ methodologies, avoiding recently covered topics
+3. **News Gathering**: Fetches relevant cybersecurity articles from newsdata.io with strict topic matching
+4. **AI Content Generation**: Google Gemini AI generates comprehensive breakdown with:
+   - Attack overview and real-world context
+   - Blue Team defense strategies and detection methods
+   - Red Team attack techniques and exploitation details
+   - Related news articles with cybersecurity context
+5. **Database Storage**: Content instantly stored in Supabase PostgreSQL
+6. **Real-time Access**: Available immediately through Next.js app with search and filtering
 
 ```mermaid
-flowchart TD;
-    A[Vercel Cron Job – daily at 12 PM UTC] --> B["/api/cron endpoint"];
-    B --> C[Content Generator];
-    C --> D[Attack Database - 32+ methodologies];
-    C --> E[Google Gemini AI];
-    C --> F[Supabase Database];
-    F --> G[Next.js App + Archive];
-    G --> H[Search/Filter Interface];
-    G --> I[Vercel CDN];
+flowchart TD
+    A[Vercel Cron - 12:01 AM IST] --> B[/api/cron endpoint]
+    B --> C[Select Attack Methodology]
+    C --> D[Fetch News - newsdata.io]
+    D --> E[Generate Content - Gemini AI]
+    E --> F[Store in Supabase]
+    F --> G[Next.js App + Archive]
+    G --> H[Users Access Content]
 ```
 
 ---
 
 ## ⚙️ Tech Stack
 
-| Layer                  | Choice                                                       |
-| :--------------------- | :----------------------------------------------------------- |
-| **Front-end**          | Next.js 15, Tailwind CSS, DaisyUI, Lucide React Icons       |
-| **Content Generation** | Node.js 20, TypeScript, NewsAPI, Google Gemini AI           |
-| **Database**           | Supabase (PostgreSQL) for content, MongoDB Atlas for subscriptions |
-| **Search & Filter**    | Real-time client-side filtering with React hooks            |
-| **Automation**         | Vercel Cron Jobs (12:00 PM UTC daily)                       |
-| **Hosting**            | Vercel (recommended) or Netlify                             |
-| **Development**        | Homebrew Node.js, Cache management scripts                  |
+| Layer | Technology |
+|:------|:-----------|
+| **Frontend** | Next.js 15, React, Tailwind CSS, DaisyUI |
+| **Backend** | Next.js API Routes, TypeScript |
+| **AI Generation** | Google Gemini AI (Gemini 1.5 Flash) |
+| **News API** | newsdata.io with strict relevance matching |
+| **Database** | Supabase (PostgreSQL) for content storage |
+| **Subscriptions** | MongoDB Atlas for email management |
+| **Automation** | Vercel Cron Jobs (daily at 12:01 AM IST) |
+| **Hosting** | Vercel with Edge Functions |
+| **Styling** | Lucide React icons, custom animations |
 
 ---
 
-## 📂 Repository Layout
+## 📂 Repository Structure
 
 ```
 /oh-my-security
 ├── apps/
-│   └── web/                    # Next.js front-end application
-│       ├── src/app/api/cron/   # Vercel cron job endpoint  
-│       ├── src/app/archive/    # Enhanced archive with search/filter
-│       └── src/lib/supabase.ts # Supabase database client
-├── packages/
-│   └── generator/              # TypeScript CLI for daily content generation
-├── content/                    # JSON files (backup, primary storage is Supabase)
-├── vercel.json                 # Vercel configuration with cron schedule
-├── SUPABASE_SETUP.sql         # Database setup script
-├── migrate-to-supabase.js     # Migration script from files to database
-└── fix-dev-server.sh          # Development cache fix script
+│   └── web/                         # Next.js application
+│       ├── src/
+│       │   ├── app/
+│       │   │   ├── api/cron/        # Automated content generation
+│       │   │   ├── archive/         # Search & filter interface
+│       │   │   ├── about/           # About page
+│       │   │   └── page.tsx         # Home page
+│       │   ├── components/          # React components
+│       │   └── lib/                 # Utilities & database clients
+│       └── public/                  # Static assets
+├── vercel.json                      # Cron schedule configuration
+├── SUPABASE_SETUP.sql              # Database schema
+└── README.md                        # This file
 ```
 
 ---
 
-## 🚀 Quick Start (Local Development)
+## 🚀 Quick Start
 
-To get Oh-My-Security running on your local machine:
+### Prerequisites
+- Node.js 18+ and npm
+- Supabase account (free tier)
+- MongoDB Atlas account (free tier)
+- newsdata.io API key (free tier)
+- Google AI Studio API key (free tier)
 
-1.  **Clone the repository & Install dependencies:**
+### Installation
 
-    ```bash
-    git clone https://github.com/Aniket00736/oh-my-security.git
-    cd oh-my-security
-    npm install
-    ```
+1. **Clone and install:**
+   ```bash
+   git clone https://github.com/pentoshi007/oh-my-security.git
+   cd oh-my-security
+   npm install
+   ```
 
-2.  **Set up Environment Variables:**
-    Create `apps/web/.env.local` file with your API keys:
-
-    ```bash
-    # Supabase Configuration (Required)
-    SUPABASE_URL=your_supabase_project_url
-    SUPABASE_ANON_KEY=your_supabase_anon_key
-    SUPABASE_SERVICE_KEY=your_supabase_service_role_key
-
-    # Content Generation APIs (Required)
-    NEWS_API_KEY=your_newsapi_key
-    GOOGLE_API_KEY=your_google_gemini_api_key
-
-    # MongoDB for Subscriptions (Required)
-    MONGODB_URI=your_mongodb_atlas_connection_string
-
-    # Cron Security (Required)
-    CRON_SECRET=your_random_secure_string
-    ```
-
-    **Get your API keys from:**
-    - **Supabase**: Create project at [supabase.com](https://supabase.com) → Settings → API
-    - **NewsAPI**: Register at [newsapi.org](https://newsapi.org/register)
-    - **Google Gemini AI**: Get API key from [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
-    - **MongoDB Atlas**: Create cluster at [mongodb.com/atlas](https://mongodb.com/atlas)
-    - **CRON_SECRET**: Generate a strong random string
-
-3.  **Generate Today's Content (Optional, for testing generator):**
-
-    ```bash
-    cd packages/generator
-    npm start
-    ```
-
-    This will create a new JSON file in the `content/` directory.
-
-4.  **Run the Website:**
-
-    ```bash
-    cd apps/web
-    npm run dev
-    ```
-
-    The website will be accessible at `http://localhost:3000`.
-
----
-
-## 🌐 Deployment
-
-Oh-My-Security is designed for easy deployment with modern database architecture:
-
-### **Vercel (Recommended)**
-
-1. **Set up Supabase Database**:
+2. **Set up Supabase database:**
    - Create project at [supabase.com](https://supabase.com)
-   - Run the SQL setup: Execute `SUPABASE_SETUP.sql` in Supabase SQL Editor
-   - Migrate existing content: `node migrate-to-supabase.js`
+   - Go to SQL Editor and run `SUPABASE_SETUP.sql`
+   - Get your project URL and keys from Settings → API
 
-2. **Deploy to Vercel**:
-   - Import repository → Set root directory to `apps/web`
-   - Configure environment variables in Vercel dashboard:
-     ```bash
-     SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY
-     NEWS_API_KEY, GOOGLE_API_KEY, MONGODB_URI, CRON_SECRET
-     ```
-   - Vercel cron automatically handles daily content generation
+3. **Configure environment variables:**
 
-3. **Benefits of New Architecture**:
-   - ✅ **No Git Conflicts**: Content stored in database, not repository
-   - ✅ **Instant Updates**: New content appears immediately
-   - ✅ **Better Performance**: Database queries vs file system reads
-   - ✅ **Scalable**: Handles thousands of concurrent users
+   Create `apps/web/.env.local`:
+   ```bash
+   # Supabase (Required)
+   SUPABASE_URL=your_supabase_project_url
+   SUPABASE_ANON_KEY=your_anon_key
+   SUPABASE_SERVICE_KEY=your_service_role_key
 
-### **Development Scripts**
+   # Content Generation (Required)
+   NEWSDATA_API_KEY=your_newsdata_api_key
+   GOOGLE_API_KEY=your_gemini_api_key
 
-- `npm run dev` - Start development server
-- `npm run fix-dev` - Fix corrupted Next.js cache
-- `npm run fresh-start` - Complete reset of development environment
+   # Email Subscriptions (Required)
+   MONGODB_URI=your_mongodb_connection_string
+
+   # Cron Security (Required for production)
+   CRON_SECRET=your_random_secure_string
+   ```
+
+   **Get your API keys:**
+   - **Supabase**: [supabase.com](https://supabase.com) → Project Settings → API
+   - **newsdata.io**: [newsdata.io](https://newsdata.io) → API Key
+   - **Google Gemini**: [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+   - **MongoDB**: [mongodb.com/atlas](https://mongodb.com/atlas) → Connect → Connection String
+   - **CRON_SECRET**: Generate with `openssl rand -base64 32`
+
+4. **Run locally:**
+   ```bash
+   npm run dev
+   ```
+
+   Visit `http://localhost:3000`
 
 ---
 
-## 🔒 Security Considerations
+## 🌐 Deployment (Vercel)
 
-Security is paramount in Oh-My-Security's design and operation:
+1. **Push to GitHub:**
+   ```bash
+   git add .
+   git commit -m "Initial setup"
+   git push origin main
+   ```
 
-- **Environment Variables**: All sensitive information (API keys, database credentials) are stored as environment variables and are **never** committed to version control. `.env.example` files are provided for documentation without real values.
-- **Database Security**: MongoDB connections are secured with proper authentication, and input validation is implemented for all database operations to prevent injection attacks.
-- **API Security**: CRON endpoints are protected with a `CRON_SECRET` for authenticated access. Input sanitization is applied to all user inputs.
-- **Content Security**: Educational exploit code is clearly marked as examples. The project explicitly avoids including real malicious code or working exploits. AI-generated content is reviewed for ethical practices and accuracy.
-- **No Sensitive Data**: The project does not store or expose any personal information or real email lists in the codebase or public repositories.
+2. **Deploy to Vercel:**
+   - Go to [vercel.com](https://vercel.com)
+   - Import your GitHub repository
+   - Set root directory to `apps/web`
+   - Add all environment variables from `.env.local`
+   - Deploy!
+
+3. **Verify cron job:**
+   - Check Vercel dashboard → Cron Jobs
+   - Should show: `31 18 * * *` (6:31 PM UTC = 12:01 AM IST)
+   - First content will generate at next scheduled run
 
 ---
 
-## 🔍 New Features (Latest Update)
+## 🎯 Key Features Explained
 
-### **Enhanced Archive System**
-- **Real-time Search**: Search by attack type, date, or category with instant results
-- **Smart Filtering**: Filter content by attack categories with dynamic options
-- **Flexible Sorting**: Sort by date (newest/oldest) or name (A-Z/Z-A)
-- **Responsive Design**: Works perfectly on desktop and mobile devices
+### Strict News Relevance Matching
+Our newsdata.io integration uses ultra-strict matching to ensure articles are genuinely about the daily topic:
+- Attack name/keywords must appear in title OR description (not buried in content)
+- Requires strong cybersecurity context (hacking, malware, breach, etc.)
+- Excludes legal, medical, and non-cyber security contexts
+- Rejects generic articles when no specific content found
 
-### **Supabase Migration**
-- **Database Storage**: All content now stored in Supabase PostgreSQL for better performance
-- **No Git Conflicts**: Content generation no longer creates repository commits
-- **Instant Updates**: New content appears immediately without redeployment
-- **API Endpoints**: RESTful APIs for content access and archive browsing
+### Intelligent Attack Selection
+- Rotates through 25+ attack methodologies
+- Tracks recently used attacks to ensure variety
+- Resets history after covering all topics
+- Categories: Web, Network, Social Engineering, Malware, Cloud, API, and more
 
-### **Development Improvements**
-- **Cache Fix Scripts**: Automated solutions for Next.js development cache issues
-- **Better Error Handling**: Improved error messages and fallback mechanisms
-- **Enhanced Styling**: Fixed form visibility issues and improved user experience
+### Archive & Search
+- Real-time client-side filtering
+- Search by attack name, date, or category
+- Sort by date or alphabetically
+- Responsive design for all devices
+
+---
+
+## 🔒 Security & Privacy
+
+- **No Hardcoded Secrets**: All API keys stored as environment variables
+- **Secure Database**: Supabase with Row Level Security (RLS)
+- **Protected Endpoints**: Cron routes secured with `CRON_SECRET`
+- **Input Validation**: All user inputs sanitized
+- **Educational Only**: No real malicious code or working exploits
+- **Privacy First**: No personal data collection beyond email subscriptions
+
+---
+
+## 📊 Attack Coverage
+
+Current database includes 25+ attack methodologies across categories:
+
+- **Web Attacks**: SQL Injection, XSS, CSRF, XXE, SSRF
+- **Network**: DDoS, DNS Poisoning, ARP Spoofing, SSL Stripping
+- **Malware**: Ransomware, Trojans, Rootkits, Keyloggers
+- **Social Engineering**: Phishing, Vishing, Pretexting
+- **Cloud**: S3 Misconfiguration, IAM Exploitation
+- **API**: Authentication Bypass, Rate Limit Abuse
+- **Authentication**: Credential Stuffing, Brute Force, Session Hijacking
+- **And many more...**
+
+---
+
+## 🛠️ Development
+
+**Available scripts:**
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Run production build locally
+npm run lint         # Run ESLint
+```
+
+**Debugging cron locally:**
+```bash
+# Manually trigger cron endpoint
+curl http://localhost:3000/api/cron \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+```
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions to Oh-My-Security! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute, set up your development environment, and follow our code style.
+Contributions are welcome! Here's how:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+Please ensure:
+- Code follows existing style
+- All tests pass
+- Documentation is updated
+- Commit messages are clear
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-## 🙌 Credits
+## 🙌 Acknowledgments
 
-Built with ❤️ by [Aniket Pandey](https://linkedin.com/in/aniket00736).  
-Follow me on [Twitter](https://x.com/lunatic_ak_) · [GitHub](https://github.com/pentoshi007).
+Built with ❤️ for the cybersecurity community.
+
+**Creator**: [Aniket Pandey](https://linkedin.com/in/aniket00736)
+**Follow**: [Twitter](https://x.com/lunatic_ak_) · [GitHub](https://github.com/pentoshi007)
+
+---
+
+## 📈 Roadmap
+
+- [ ] Add more attack methodologies (target: 50+)
+- [ ] Implement user accounts and progress tracking
+- [ ] Weekly digest emails for subscribers
+- [ ] Interactive exploit demonstrations
+- [ ] Community discussion forum
+- [ ] Mobile app (React Native)
+- [ ] Multi-language support
+
+---
+
+**Star ⭐ this repo if you find it useful!**
