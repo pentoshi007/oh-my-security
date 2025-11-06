@@ -59,7 +59,7 @@ export class NewsAPIService {
                 const score = this.scoreArticleRelevance(article, attack);
                 return { article, score };
             })
-            .filter(item => item.score > 2) // Higher threshold for relevance
+            .filter(item => item.score > 0) // Only accept articles that pass strict validation (score 0 = rejected)
             .sort((a, b) => b.score - a.score); // Sort by relevance
 
         // Return top 5 most relevant articles
@@ -122,16 +122,33 @@ export class NewsAPIService {
 
     /**
      * Score article relevance to the attack methodology
+     * Returns 0 if article doesn't meet strict requirements
      */
     private scoreArticleRelevance(article: NewsAPIArticle, attack: AttackMethodology): number {
-        let score = 0;
         const titleLower = article.title.toLowerCase();
         const descLower = (article.description || '').toLowerCase();
         const fullText = `${titleLower} ${descLower}`;
-        
+
+        // CRITICAL REQUIREMENT 1: Attack topic MUST be mentioned in title or description
+        const hasAttackInTitleOrDesc = this.hasExactAttackMatch(fullText, attack);
+        if (!hasAttackInTitleOrDesc) {
+            // Topic not in title/description - REJECT immediately
+            return 0;
+        }
+
+        // CRITICAL REQUIREMENT 2: Must have strong cybersecurity context
+        const hasStrongCybersecurityContext = this.hasStrongCybersecurityContext(fullText);
+        if (!hasStrongCybersecurityContext) {
+            // No cybersecurity context - REJECT
+            return 0;
+        }
+
+        // Both requirements met - calculate detailed relevance score
+        let score = 100; // Base score for meeting strict requirements
+
         // High-value exact matches (attack name in title gets highest score)
-        if (titleLower.includes(attack.name.toLowerCase())) score += 10;
-        if (descLower.includes(attack.name.toLowerCase())) score += 6;
+        if (titleLower.includes(attack.name.toLowerCase())) score += 50;
+        if (descLower.includes(attack.name.toLowerCase())) score += 25;
         
         // Check for aliases with high weight
         attack.aliases.forEach(alias => {
@@ -212,6 +229,116 @@ export class NewsAPIService {
         }
         
         return Math.max(0, score); // Ensure non-negative score
+    }
+
+    /**
+     * Check if article mentions the specific attack name, aliases, or primary keywords
+     */
+    private hasExactAttackMatch(text: string, attack: AttackMethodology): boolean {
+        const textLower = text.toLowerCase();
+
+        // Helper to check with word boundaries
+        const containsPhrase = (haystack: string, needle: string): boolean => {
+            // For multi-word phrases, check exact substring
+            if (needle.includes(' ')) {
+                return haystack.includes(needle);
+            }
+            // For single words, check with word boundaries
+            const regex = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+            return regex.test(haystack);
+        };
+
+        // Check for attack name
+        const attackNameLower = attack.name.toLowerCase();
+        if (containsPhrase(textLower, attackNameLower)) {
+            return true;
+        }
+
+        // Check for aliases
+        if (attack.aliases && attack.aliases.length > 0) {
+            for (const alias of attack.aliases) {
+                if (containsPhrase(textLower, alias.toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+
+        // Check for primary search keywords (at least 2 must match)
+        const keywordMatches = attack.searchKeywords.slice(0, 4).filter((keyword: string) =>
+            containsPhrase(textLower, keyword.toLowerCase())
+        ).length;
+
+        // Require at least 2 primary keywords to match
+        return keywordMatches >= 2;
+    }
+
+    /**
+     * Check if article has strong cybersecurity context
+     * Must contain cybersecurity-related terms to confirm it's a security article
+     */
+    private hasStrongCybersecurityContext(text: string): boolean {
+        const textLower = text.toLowerCase();
+
+        // Primary cybersecurity indicators (strong signals)
+        const primaryTerms = [
+            'cybersecurity', 'cyber security', 'cyber attack', 'cyber threat',
+            'security breach', 'data breach', 'security incident',
+            'hacking', 'hacker', 'hacked',
+            'malware', 'ransomware', 'trojan',
+            'vulnerability', 'exploit',
+            'threat actor', 'security researcher',
+            'cybercrime', 'cyberattack'
+        ];
+
+        // Secondary security terms (supporting signals)
+        const secondaryTerms = [
+            'security', 'attack', 'breach', 'threat', 'vulnerability',
+            'compromise', 'intrusion', 'penetration',
+            'patch', 'zero-day', 'backdoor',
+            'phishing', 'credential', 'authentication',
+            'encryption', 'firewall', 'antivirus'
+        ];
+
+        // Exclude articles that are NOT about cybersecurity
+        const excludeContexts = [
+            // Legal contexts
+            'attorney-client privilege', 'legal privilege', 'court case', 'lawsuit',
+            'litigation', 'court ruling', 'legal precedent', 'judge ruled',
+            // Medical/health contexts
+            'medical', 'healthcare', 'hospital', 'patient privacy', 'hipaa',
+            // Physical security contexts
+            'border security', 'national security advisor', 'homeland security',
+            'social security', 'job security', 'food security',
+            // Entertainment/irrelevant contexts
+            'celebrity', 'gossip', 'entertainment', 'sports', 'politics', 'weather',
+            // Financial contexts (unless explicitly cyber-related)
+            'securities and exchange', 'financial security'
+        ];
+
+        // Check for exclusion contexts first
+        for (const excludeContext of excludeContexts) {
+            if (textLower.includes(excludeContext)) {
+                // Only reject if it doesn't also have strong cybersecurity terms
+                const hasCyberTerm = primaryTerms.some(term => textLower.includes(term));
+                if (!hasCyberTerm) {
+                    return false;
+                }
+            }
+        }
+
+        // Count primary cybersecurity term matches
+        const primaryMatches = primaryTerms.filter(term => textLower.includes(term)).length;
+
+        // If we have at least 1 primary term, it's likely a cybersecurity article
+        if (primaryMatches >= 1) {
+            return true;
+        }
+
+        // Otherwise, require multiple secondary terms to indicate security context
+        const secondaryMatches = secondaryTerms.filter(term => textLower.includes(term)).length;
+
+        // Need at least 3 secondary security terms if no primary terms
+        return secondaryMatches >= 3;
     }
 
     /**

@@ -57,7 +57,7 @@ export default function ContentDisplay({ content }: ContentDisplayProps) {
       </div>
         
       {/* Article Reference - Mobile Optimized */}
-      {content.article && (
+      {content.article ? (
         <div className="bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-8 sm:mb-12 shadow-sm max-w-5xl mx-auto">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 tracking-tight">
             In the News
@@ -67,9 +67,9 @@ export default function ContentDisplay({ content }: ContentDisplayProps) {
           </p>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
             <span className="font-medium text-gray-500">Source: {content.article.source}</span>
-            <a 
-              href={content.article.url} 
-              target="_blank" 
+            <a
+              href={content.article.url}
+              target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-semibold transition-colors group py-2 px-3 -mx-3 rounded-lg hover:bg-blue-50"
             >
@@ -77,6 +77,16 @@ export default function ContentDisplay({ content }: ContentDisplayProps) {
               <ExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
             </a>
           </div>
+        </div>
+      ) : (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-8 sm:mb-12 shadow-sm max-w-5xl mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-amber-800 mb-3 tracking-tight">
+            In the News
+          </h2>
+          <p className="text-amber-700 leading-relaxed text-sm sm:text-base">
+            No relevant cybersecurity news article found matching today's topic: <span className="font-semibold">{content.attackType}</span>.
+            We only show articles that directly relate to the specific attack methodology being covered.
+          </p>
         </div>
       )}
 
