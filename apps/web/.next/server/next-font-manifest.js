@@ -1,1 +1,1 @@
-self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/workspace/apps/web/src/app/layout":["static/media/3dc379dc9b5dec12-s.p.woff2"]},"appUsingSizeAdjust":true,"pagesUsingSizeAdjust":false}';
+self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{},"appUsingSizeAdjust":false,"pagesUsingSizeAdjust":false}';
