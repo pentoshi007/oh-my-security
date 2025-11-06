@@ -1,4 +1,4 @@
-// File: /workspace/apps/web/src/app/api/archive/route.ts
+// File: /home/user/oh-my-security/apps/web/src/app/api/archive/route.ts
 import * as entry from '../../../../../src/app/api/archive/route.js'
 import type { NextRequest } from 'next/server.js'
 

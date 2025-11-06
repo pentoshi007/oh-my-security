@@ -1,4 +1,4 @@
-// File: /workspace/apps/web/src/app/api/content/[date]/route.ts
+// File: /home/user/oh-my-security/apps/web/src/app/api/content/[date]/route.ts
 import * as entry from '../../../../../../src/app/api/content/[date]/route.js'
 import type { NextRequest } from 'next/server.js'
 

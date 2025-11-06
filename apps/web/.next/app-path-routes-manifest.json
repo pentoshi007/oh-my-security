@@ -7,7 +7,7 @@
   "/api/subscribe/route": "/api/subscribe",
   "/api/cron/route": "/api/cron",
   "/about/page": "/about",
-  "/archive/page": "/archive",
   "/day/[date]/page": "/day/[date]",
+  "/archive/page": "/archive",
   "/page": "/"
 }
