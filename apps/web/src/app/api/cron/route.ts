@@ -895,12 +895,10 @@ async function generateDailyContent() {
   let articles = await newsService.fetchNewsForAttack(selectedAttack);
 
   if (articles.length === 0) {
-    mockSpinner.warn(`No specific news found, using general cybersecurity news`);
-    const generalArticles = await newsService.fetchCybersecurityNews();
-    articles = generalArticles.slice(0, 3);
+    mockSpinner.warn(`No relevant articles found for ${selectedAttack.name} - will use fallback content`);
+  } else {
+    mockSpinner.succeed(`Found ${articles.length} relevant articles`);
   }
-
-  mockSpinner.succeed(`Found ${articles.length} relevant articles`);
 
   if (articles.length > 0) {
     console.log(`📰 Top article: "${articles[0].title}" - ${articles[0].source.name}`);
@@ -935,13 +933,7 @@ async function generateDailyContent() {
       source: articles[0].source.name,
       publishedAt: articles[0].publishedAt,
       summary: articles[0].description || articles[0].title,
-    } : {
-      title: `Educational Content: ${selectedAttack.name}`,
-      url: 'https://oh-my-security.vercel.app',
-      source: 'Oh-My-Security',
-      publishedAt: new Date().toISOString(),
-      summary: selectedAttack.description,
-    },
+    } : null, // No article when no relevant match found
     content: {
       blueTeam: blueTeamContent,
       redTeam: redTeamContent,

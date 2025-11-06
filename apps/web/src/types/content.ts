@@ -29,7 +29,7 @@ export interface ContentMetadata {
 export interface DailyContent {
   date: string;
   attackType: string;
-  article: Article;
+  article: Article | null;
   content: {
     blueTeam: BlueTeamContent;
     redTeam: RedTeamContent;
