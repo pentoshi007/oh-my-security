@@ -234,11 +234,158 @@ const ATTACK_METHODOLOGIES = [
     searchKeywords: ['security misconfiguration', 'misconfig', 'default credentials', 'exposed services'],
     difficulty: 'Low',
     impacts: ['Unauthorized access', 'Information disclosure', 'System compromise', 'Data exposure']
+  },
+  {
+    id: 'supply-chain',
+    name: 'Supply Chain Attack',
+    category: 'Advanced Attacks',
+    description: 'Attack targeting less-secure elements in supply chain to compromise final target',
+    searchKeywords: ['supply chain attack', 'solarwinds', 'log4shell', 'software supply chain', 'dependency attack'],
+    aliases: ['Third-Party Attack', 'Dependency Compromise'],
+    difficulty: 'High',
+    impacts: ['Widespread compromise', 'Trust violation', 'Massive data breach', 'System backdoor']
+  },
+  {
+    id: 'api-security',
+    name: 'API Security Vulnerabilities',
+    category: 'Web Application Attacks',
+    description: 'Exploitation of weaknesses in API authentication, authorization, or implementation',
+    searchKeywords: ['api security', 'api vulnerability', 'api attack', 'rest api exploit', 'api injection'],
+    aliases: ['API Exploitation', 'REST API Attack'],
+    difficulty: 'Medium',
+    impacts: ['Data exposure', 'Unauthorized access', 'Business logic bypass', 'Data manipulation']
+  },
+  {
+    id: 'credential-stuffing',
+    name: 'Credential Stuffing',
+    category: 'Authentication Attacks',
+    description: 'Automated injection of breached username/password pairs to gain unauthorized access',
+    searchKeywords: ['credential stuffing', 'password spraying', 'account takeover', 'credential reuse'],
+    aliases: ['Password Spraying', 'Account Takeover'],
+    difficulty: 'Medium',
+    impacts: ['Account compromise', 'Identity theft', 'Fraud', 'Data breach']
+  },
+  {
+    id: 'business-email-compromise',
+    name: 'Business Email Compromise (BEC)',
+    category: 'Social Engineering',
+    description: 'Sophisticated scam targeting businesses by compromising legitimate email accounts',
+    searchKeywords: ['business email compromise', 'bec', 'ceo fraud', 'email fraud', 'wire fraud'],
+    aliases: ['CEO Fraud', 'Email Account Compromise'],
+    difficulty: 'Medium',
+    impacts: ['Financial loss', 'Wire fraud', 'Data theft', 'Reputation damage']
+  },
+  {
+    id: 'cryptojacking',
+    name: 'Cryptojacking',
+    category: 'Malware',
+    description: 'Unauthorized use of computing resources to mine cryptocurrency',
+    searchKeywords: ['cryptojacking', 'crypto mining malware', 'cryptocurrency hijacking', 'illegal mining'],
+    aliases: ['Cryptocurrency Mining Malware', 'Drive-by Mining'],
+    difficulty: 'Medium',
+    impacts: ['Resource exhaustion', 'Performance degradation', 'Increased costs', 'System damage']
+  },
+  {
+    id: 'iot-attacks',
+    name: 'IoT Device Attacks',
+    category: 'Network Attacks',
+    description: 'Exploitation of vulnerabilities in Internet of Things devices and networks',
+    searchKeywords: ['iot attack', 'smart device hack', 'iot vulnerability', 'iot botnet', 'mirai'],
+    aliases: ['Smart Device Attack', 'IoT Botnet'],
+    difficulty: 'Medium',
+    impacts: ['Device compromise', 'Network access', 'Privacy violation', 'Botnet recruitment']
+  },
+  {
+    id: 'cloud-misconfig',
+    name: 'Cloud Misconfiguration',
+    category: 'Configuration Attacks',
+    description: 'Improperly configured cloud services leading to data exposure and security breaches',
+    searchKeywords: ['cloud misconfiguration', 's3 bucket leak', 'azure misconfig', 'cloud security', 'exposed database'],
+    aliases: ['S3 Bucket Misconfiguration', 'Cloud Storage Leak'],
+    difficulty: 'Low',
+    impacts: ['Data exposure', 'Privacy breach', 'Compliance violation', 'Reputation damage']
+  },
+  {
+    id: 'watering-hole',
+    name: 'Watering Hole Attack',
+    category: 'Advanced Attacks',
+    description: 'Targeted attack compromising websites frequently visited by intended victims',
+    searchKeywords: ['watering hole', 'strategic web compromise', 'targeted website attack', 'drive-by download'],
+    aliases: ['Strategic Web Compromise', 'Targeted Website Attack'],
+    difficulty: 'High',
+    impacts: ['Targeted infection', 'Malware distribution', 'Credential theft', 'Data exfiltration']
+  },
+  {
+    id: 'typosquatting',
+    name: 'Typosquatting',
+    category: 'Social Engineering',
+    description: 'Registration of domain names similar to legitimate ones to deceive users',
+    searchKeywords: ['typosquatting', 'domain spoofing', 'url hijacking', 'fake domain', 'homograph attack'],
+    aliases: ['URL Hijacking', 'Domain Spoofing'],
+    difficulty: 'Low',
+    impacts: ['Phishing', 'Malware distribution', 'Brand reputation damage', 'Credential theft']
+  },
+  {
+    id: 'fileless-malware',
+    name: 'Fileless Malware',
+    category: 'Malware',
+    description: 'Malware that operates in memory without writing files to disk, evading detection',
+    searchKeywords: ['fileless malware', 'living off the land', 'memory-only malware', 'powershell attack'],
+    aliases: ['Memory-Only Malware', 'Living Off The Land'],
+    difficulty: 'High',
+    impacts: ['Evasion of detection', 'Persistence', 'Data theft', 'System compromise']
+  },
+  {
+    id: 'ai-poisoning',
+    name: 'AI Model Poisoning',
+    category: 'Advanced Attacks',
+    description: 'Manipulation of AI training data or models to influence behavior and outcomes',
+    searchKeywords: ['ai poisoning', 'model poisoning', 'adversarial machine learning', 'data poisoning', 'ml attack'],
+    aliases: ['Data Poisoning', 'Model Manipulation'],
+    difficulty: 'High',
+    impacts: ['Model corruption', 'Biased predictions', 'Security bypass', 'Data integrity loss']
+  },
+  {
+    id: 'smishing',
+    name: 'SMS Phishing (Smishing)',
+    category: 'Social Engineering',
+    description: 'Phishing attack conducted through SMS text messages to steal sensitive information',
+    searchKeywords: ['smishing', 'sms phishing', 'text message scam', 'mobile phishing'],
+    aliases: ['Text Message Phishing', 'SMS Scam'],
+    difficulty: 'Low',
+    impacts: ['Credential theft', 'Financial fraud', 'Malware installation', 'Identity theft']
+  },
+  {
+    id: 'container-escape',
+    name: 'Container Escape',
+    category: 'System Attacks',
+    description: 'Breaking out of container isolation to access host system or other containers',
+    searchKeywords: ['container escape', 'docker escape', 'kubernetes attack', 'container breakout'],
+    aliases: ['Docker Escape', 'Container Breakout'],
+    difficulty: 'High',
+    impacts: ['Host compromise', 'Privilege escalation', 'Data access', 'Lateral movement']
+  },
+  {
+    id: 'deepfake',
+    name: 'Deepfake Attacks',
+    category: 'Social Engineering',
+    description: 'Use of AI-generated synthetic media to impersonate individuals for fraud or manipulation',
+    searchKeywords: ['deepfake', 'synthetic media', 'ai impersonation', 'voice cloning', 'video manipulation'],
+    aliases: ['Synthetic Media Attack', 'AI Impersonation'],
+    difficulty: 'Medium',
+    impacts: ['Identity fraud', 'Reputation damage', 'Financial fraud', 'Misinformation']
+  },
+  {
+    id: 'juice-jacking',
+    name: 'Juice Jacking',
+    category: 'Physical Attacks',
+    description: 'Cyber attack through compromised USB charging stations to steal data or install malware',
+    searchKeywords: ['juice jacking', 'usb charging attack', 'public charging', 'usb attack'],
+    aliases: ['USB Charging Attack', 'Charging Port Attack'],
+    difficulty: 'Low',
+    impacts: ['Data theft', 'Malware installation', 'Device compromise', 'Privacy violation']
   }
 ];
-
-// Simple history tracker for serverless environment
-let usedAttackIds: string[] = [];
 
 // Enhanced mock Ora instance for serverless environment
 const createMockSpinner = (operation: string) => ({
@@ -872,18 +1019,38 @@ async function generateDailyContent() {
   const newsService = new NewsDataService(newsDataApiKey);
   const aiService = new AIContentGenerator(googleApiKey);
 
+  // Fetch recently used attacks from Supabase to avoid duplicates
+  mockSpinner.start('Checking recently used attack types...');
+  const { data: recentContent, error: recentError } = await supabaseAdmin
+    .from('daily_content')
+    .select('attack_type, date')
+    .order('date', { ascending: false })
+    .limit(10);
+
+  const recentlyUsedAttackNames = recentContent?.map(c => c.attack_type) || [];
+  const recentlyUsedAttackIds = ATTACK_METHODOLOGIES
+    .filter(attack => recentlyUsedAttackNames.includes(attack.name))
+    .map(attack => attack.id);
+
+  console.log(`📋 Recently used attacks (last 10): ${recentlyUsedAttackNames.slice(0, 5).join(', ')}...`);
+
   // Select next attack methodology (avoid recently used ones)
   const availableAttacks = ATTACK_METHODOLOGIES.filter(
-    attack => !usedAttackIds.includes(attack.id)
+    attack => !recentlyUsedAttackIds.includes(attack.id)
   );
 
   let selectedAttack;
   if (availableAttacks.length === 0) {
-    // Reset if all attacks have been used
-    usedAttackIds = [];
-    selectedAttack = ATTACK_METHODOLOGIES[Math.floor(Math.random() * ATTACK_METHODOLOGIES.length)];
+    // If all attacks have been recently used, exclude only the last 3
+    const veryRecentAttacks = recentlyUsedAttackIds.slice(0, 3);
+    const lessRecentlyAvailable = ATTACK_METHODOLOGIES.filter(
+      attack => !veryRecentAttacks.includes(attack.id)
+    );
+    selectedAttack = lessRecentlyAvailable[Math.floor(Math.random() * lessRecentlyAvailable.length)];
+    mockSpinner.warn('All attacks recently used, selecting from less recent pool');
   } else {
     selectedAttack = availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
+    mockSpinner.succeed(`Found ${availableAttacks.length} available attacks not recently used`);
   }
 
   mockSpinner.succeed(`Selected: ${selectedAttack.name}`);
@@ -948,12 +1115,6 @@ async function generateDailyContent() {
       impact: selectedAttack.impacts.join(', ')
     }
   };
-
-  // Update history
-  usedAttackIds.push(selectedAttack.id);
-  if (usedAttackIds.length > 10) {
-    usedAttackIds = usedAttackIds.slice(-10); // Keep last 10
-  }
 
   console.log(`📊 Attack methodologies available: ${ATTACK_METHODOLOGIES.length}`);
 

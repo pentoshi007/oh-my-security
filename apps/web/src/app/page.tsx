@@ -12,7 +12,7 @@ export const revalidate = 0
 
 export default async function HomePage() {
   const content = await getLatestContent()
-  const attackCount = 25 // Current attack methodologies in database
+  const attackCount = 40 // Current attack methodologies in database
 
   return (
     <div className="min-h-screen">
