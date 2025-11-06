@@ -25,7 +25,7 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">1. Attack Selection</h3>
               <p className="text-gray-600">
-                Our system intelligently selects from 25+ attack methodologies in our database, tracking recently covered topics to ensure variety and comprehensive coverage.
+                Our system intelligently selects from 40+ attack methodologies in our database, tracking recently covered topics to ensure variety and comprehensive coverage.
               </p>
             </div>
 
@@ -173,7 +173,7 @@ export default function AboutPage() {
         <div className="mt-24">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Attack Coverage</h2>
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Our database includes 25+ attack methodologies across multiple categories
+            Our database includes 40+ attack methodologies across multiple categories
           </p>
 
           <div className="grid md:grid-cols-4 gap-6">
