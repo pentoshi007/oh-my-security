@@ -44,7 +44,7 @@ Oh-My-Security operates on a fully automated pipeline:
 
 ```mermaid
 flowchart TD
-    A[Vercel Cron - 12:01 AM IST] --> B[/api/cron endpoint]
+    A[Vercel Cron - 12:01 AM IST] --> B["API Cron Endpoint"]
     B --> C[Select Attack Methodology]
     C --> D[Fetch News - newsdata.io]
     D --> E[Generate Content - Gemini AI]
