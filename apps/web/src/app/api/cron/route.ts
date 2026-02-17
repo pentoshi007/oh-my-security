@@ -753,7 +753,18 @@ ${articleList}`;
   }
 }
 
-// AI Content Generator using OpenRouter (openai/gpt-oss-120b:free)
+const CONTENT_MODELS = [
+  'openai/gpt-oss-120b:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen3-coder:free',
+];
+
+const CODE_MODELS = [
+  'qwen/qwen3-coder:free',
+  'openai/gpt-oss-120b:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+];
+
 class AIContentGenerator {
   constructor(private apiKey: string) { }
 
@@ -922,7 +933,7 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
       const methodologySection = this.extractSection(objMethodContent, 'METHODOLOGY SECTION:', []);
 
       console.log('🔄 [Red Team] Generating exploit code...');
-      const exploitContent = await this.generateContent(exploitCodePrompt);
+      const exploitContent = await this.generateContent(exploitCodePrompt, CODE_MODELS);
       console.log('✅ [Red Team] Exploit code done (' + exploitContent.length + ' chars)');
 
       console.log('✅ AI Red Team content generated — objectives:', objectivesSection.length, '| methodology:', methodologySection.length, '| exploit:', exploitContent.length);
@@ -959,17 +970,11 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
     }).join('\n\n');
   }
 
-  private async generateContent(prompt: string, maxRetries = 2): Promise<string> {
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  private async generateContent(prompt: string, models: string[] = CONTENT_MODELS): Promise<string> {
+    for (let modelIdx = 0; modelIdx < models.length; modelIdx++) {
+      const model = models[modelIdx];
       try {
-        if (attempt > 0) {
-          const delay = attempt * 5000;
-          console.log(`🔄 [AI] Retry ${attempt}/${maxRetries} after ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-
-        console.log('🔄 [AI] Calling OpenRouter API...');
-        console.log('🔑 [AI] API key present:', !!this.apiKey, '| Key prefix:', this.apiKey?.substring(0, 8) + '...');
+        console.log(`🔄 [AI] Calling OpenRouter — model: ${model}`);
 
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
@@ -980,7 +985,7 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
             'X-Title': 'Oh-My-Security',
           },
           body: JSON.stringify({
-            model: 'openai/gpt-oss-120b:free',
+            model,
             messages: [
               {
                 role: 'system',
@@ -996,18 +1001,19 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
           })
         });
 
-        console.log('📡 [AI] Response status:', response.status, response.statusText);
+        console.log(`📡 [AI] ${model} — ${response.status} ${response.statusText}`);
 
-        if (response.status === 429 && attempt < maxRetries) {
+        if (response.status === 429) {
           const errorBody = await response.text().catch(() => '');
-          console.log(`⚠️ [AI] Rate limited (429), will retry — ${errorBody.substring(0, 200)}`);
+          console.log(`⚠️ [AI] ${model} rate limited (429), trying next model — ${errorBody.substring(0, 200)}`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
           continue;
         }
 
         if (!response.ok) {
           const errorBody = await response.text();
-          console.error('❌ [AI] API error body:', errorBody.substring(0, 500));
-          throw new Error(`HTTP ${response.status}: ${errorBody}`);
+          console.error(`❌ [AI] ${model} error: ${errorBody.substring(0, 500)}`);
+          continue;
         }
 
         const data = await response.json();
@@ -1019,21 +1025,22 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
         console.log('📝 [AI] First 300 chars:', generatedText?.substring(0, 300) || 'EMPTY');
 
         if (!generatedText) {
-          console.error('❌ [AI] Full response data:', JSON.stringify(data).substring(0, 1000));
-          throw new Error('AI generation failed: No response text from OpenRouter.');
+          console.error('❌ [AI] Empty response, trying next model');
+          continue;
         }
 
         return generatedText;
       } catch (error) {
-        if (attempt < maxRetries && error instanceof Error && error.message.includes('429')) {
-          console.log(`⚠️ [AI] 429 in catch, will retry...`);
+        console.error(`❌ [AI] ${model} failed:`, error instanceof Error ? error.message : 'Unknown error');
+        if (modelIdx < models.length - 1) {
+          console.log('🔄 [AI] Trying next fallback model...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
           continue;
         }
-        console.error('❌ [AI] generateContent error:', error instanceof Error ? error.message : 'Unknown error');
-        throw new Error(`OpenRouter API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(`OpenRouter API error: All models failed. Last: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
-    throw new Error('OpenRouter API error: All retry attempts exhausted');
+    throw new Error('OpenRouter API error: All fallback models exhausted');
   }
 
   private extractSection(text: string, startMarker: string, endMarkers: string[]): string {
