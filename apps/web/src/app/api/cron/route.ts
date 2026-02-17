@@ -822,6 +822,7 @@ Write a detailed but easy-to-follow technical breakdown covering:
 - Common tools and frameworks used by attackers — briefly explain what each tool does
 - Detection indicators and defensive signatures — explain what defenders look for and why
 - Reference how attacks in the news articles were conducted where applicable
+- Where relevant (especially for code-based attacks like SQL injection, XSS, command injection), include 1-2 very short inline code snippets (max 2-3 lines each) showing what the malicious input looks like. Format: \`code here\` for inline or a short fenced code block. Keep code minimal — just enough to illustrate the concept.
 Minimum 350 words. Use sub-headings and numbered lists for clarity.
 
 IMPACT SECTION:
@@ -900,6 +901,7 @@ Write a detailed multi-phase attack methodology for ${attack.name} that reads li
 - Phase 8: Exfiltration and cleanup — getting the stolen goods out and covering tracks
 - Tools, frameworks, and TTPs used at each phase — name each tool and explain what it does in one sentence (reference MITRE ATT&CK where applicable, and explain what MITRE ATT&CK is on first mention)
 - Insights from how the attacks in the news articles were conducted
+- **Include short code snippets**: For code-manipulation attacks (injection, XSS, deserialization, etc.), include 2-4 short inline code examples showing what malicious payloads look like. Keep each snippet brief (1-5 lines max). Use fenced code blocks with language hints (e.g., \`\`\`sql, \`\`\`javascript, \`\`\`python). After each code snippet, explain in plain English what it does and why it works. This helps readers connect theory to practice.
 Minimum 400 words. Use numbered phases with sub-headings for each.
 
 YOU MUST WRITE BOTH SECTIONS IN FULL. Do NOT stop after the objectives section.`;
