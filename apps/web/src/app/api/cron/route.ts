@@ -434,8 +434,7 @@ async function callSearchAI(openrouterApiKey: string, systemPrompt: string, user
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.3,
-        max_tokens: 2048,
-        reasoning: { enabled: false },
+        max_tokens: 4096,
       })
     });
 
