@@ -413,28 +413,29 @@ const createMockSpinner = (operation: string) => ({
 
 const mockSpinner = createMockSpinner('CRON');
 
-// NewsData.io service with proper relevance scoring
-class NewsDataService {
+// News service using NewsAPI.org — better coverage for cybersecurity topics
+class NewsAPIService {
   constructor(private apiKey: string) { }
 
   async fetchCybersecurityNews() {
     const response = await fetch(
-      `https://newsdata.io/api/1/news?apikey=${this.apiKey}&q=cybersecurity OR cyber attack OR hacking OR data breach&language=en&size=10`
+      `https://newsapi.org/v2/everything?q=cybersecurity OR "cyber attack" OR hacking OR "data breach"&language=en&sortBy=publishedAt&pageSize=10&apiKey=${this.apiKey}`
     );
     const data = await response.json();
 
-    // Normalize articles to match expected format
-    if (data.status === 'success' && data.results) {
-      return data.results.map((article: any) => ({
-        url: article.link || article.url || '#',
-        title: article.title || 'Untitled',
-        description: article.description || 'No description available',
-        content: article.content || '',
-        publishedAt: article.pubDate || new Date().toISOString(),
-        source: {
-          name: article.source_id || article.source_name || 'Unknown Source'
-        }
-      }));
+    if (data.status === 'ok' && data.articles) {
+      return data.articles
+        .filter((article: any) => article.title && article.title !== '[Removed]')
+        .map((article: any) => ({
+          url: article.url || '#',
+          title: article.title || 'Untitled',
+          description: article.description || 'No description available',
+          content: article.content || '',
+          publishedAt: article.publishedAt || new Date().toISOString(),
+          source: {
+            name: article.source?.name || 'Unknown Source'
+          }
+        }));
     }
 
     return [];
@@ -444,55 +445,56 @@ class NewsDataService {
     try {
       console.log(`🔍 Searching news for: ${attack.name}`);
 
-      // Try multiple search strategies - ONLY topic-specific searches, NO generic fallback
-      // newsdata.io uses simpler query syntax than NewsAPI
+      // NewsAPI.org supports advanced query syntax with AND/OR, quotes, and parentheses
       const searchStrategies = [
         // Strategy 1: Exact attack name with cybersecurity context
-        `${attack.name} cybersecurity`,
-        // Strategy 2: Primary search keywords
-        attack.searchKeywords.slice(0, 2).join(' '),
-        // Strategy 3: Attack name with category
-        `${attack.name} ${attack.category.toLowerCase()}`
+        `"${attack.name}" AND (cybersecurity OR "cyber attack" OR hacking OR security)`,
+        // Strategy 2: Primary search keywords combined
+        `(${attack.searchKeywords.slice(0, 3).map((k: string) => `"${k}"`).join(' OR ')}) AND (cybersecurity OR security OR hacking)`,
+        // Strategy 3: Attack name with category — broader match
+        `${attack.name} AND ${attack.category.toLowerCase()} AND (cyber OR security OR attack)`,
       ];
 
       let allArticles: any[] = [];
       const seenUrls = new Set<string>();
 
-      // Try each search strategy
+      // NewsAPI free tier: up to 100 requests/day, so we can afford multiple strategies
       for (let i = 0; i < searchStrategies.length; i++) {
         const query = searchStrategies[i];
         try {
           console.log(`  Strategy ${i + 1}: ${query.substring(0, 100)}...`);
+
+          // Search last 30 days (NewsAPI free tier limit)
+          const fromDate = this.getDateDaysAgo(29);
+
           const response = await fetch(
-            `https://newsdata.io/api/1/news?apikey=${this.apiKey}&q=${encodeURIComponent(query)}&language=en&size=10`
+            `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=relevancy&pageSize=20&from=${fromDate}&apiKey=${this.apiKey}`
           );
           const data = await response.json();
 
-          if (data.status === 'success' && data.results) {
-            console.log(`  Found ${data.results.length} articles`);
-            // Add unique articles - newsdata.io uses 'link' instead of 'url'
-            data.results.forEach((article: any) => {
-              if (article.link && !seenUrls.has(article.link) &&
+          if (data.status === 'ok' && data.articles) {
+            console.log(`  Found ${data.articles.length} articles`);
+            data.articles.forEach((article: any) => {
+              if (article.url && !seenUrls.has(article.url) &&
                   article.title && article.description &&
-                  !article.title.includes('[Removed]') &&
-                  !article.description.includes('[Removed]')) {
-                // Normalize article format to match our processing
+                  article.title !== '[Removed]' &&
+                  article.description !== '[Removed]') {
                 const normalizedArticle = {
-                  url: article.link,
+                  url: article.url,
                   title: article.title,
                   description: article.description,
                   content: article.content || '',
-                  publishedAt: article.pubDate,
+                  publishedAt: article.publishedAt,
                   source: {
-                    name: article.source_id || 'Unknown'
+                    name: article.source?.name || 'Unknown'
                   }
                 };
                 allArticles.push(normalizedArticle);
-                seenUrls.add(article.link);
+                seenUrls.add(article.url);
               }
             });
           } else {
-            console.log(`  Strategy ${i + 1} returned no results or error:`, data.status);
+            console.log(`  Strategy ${i + 1} returned no results or error:`, data.status, data.message || '');
           }
         } catch (strategyError) {
           console.log(`  Strategy ${i + 1} failed:`, strategyError);
@@ -504,13 +506,13 @@ class NewsDataService {
           break;
         }
 
-        // Add delay between API calls to avoid rate limiting (newsdata.io has stricter limits)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Small delay between API calls to be polite
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       console.log(`📊 Total candidate articles: ${allArticles.length}`);
 
-      // Score and filter articles for relevance - STRICT MATCHING
+      // Score and filter articles for relevance
       const scoredArticles = allArticles
         .map(article => {
           const score = this.scoreArticleRelevance(article, attack);
@@ -523,11 +525,11 @@ class NewsDataService {
           }
           return false;
         })
-        .sort((a, b) => b.score - a.score); // Sort by relevance
+        .sort((a, b) => b.score - a.score);
 
       console.log(`✅ Final relevant articles: ${scoredArticles.length}`);
 
-      // Return top 5 most relevant articles - if none found, return empty array
+      // Return top 5 most relevant articles
       const topArticles = scoredArticles.slice(0, 5).map(item => item.article);
 
       if (topArticles.length === 0) {
@@ -542,7 +544,7 @@ class NewsDataService {
   }
 
   /**
-   * Score article relevance to the attack methodology - ULTRA STRICT MATCHING
+   * Score article relevance to the attack methodology
    * Article MUST contain attack name/keywords in title OR description AND have cybersecurity context
    */
   private scoreArticleRelevance(article: any, attack: any): number {
@@ -550,25 +552,22 @@ class NewsDataService {
     const descLower = (article.description || '').toLowerCase();
     const titleAndDesc = `${titleLower} ${descLower}`;
 
-    // CRITICAL REQUIREMENT: Attack topic MUST be mentioned in title or description
-    // We don't accept articles where the topic is only buried in content
+    // CRITICAL: Attack topic MUST be mentioned in title or description
     const hasAttackInTitleOrDesc = this.hasExactAttackMatch(titleAndDesc, attack);
 
     if (!hasAttackInTitleOrDesc) {
-      // Topic not in title/description - REJECT immediately
       return 0;
     }
 
-    // MANDATORY REQUIREMENT: Must have strong cybersecurity context
+    // MANDATORY: Must have cybersecurity context
     const hasStrongCybersecurityContext = this.hasStrongCybersecurityContext(titleAndDesc);
 
     if (!hasStrongCybersecurityContext) {
-      // No cybersecurity context - REJECT
       return 0;
     }
 
-    // Both requirements met - calculate detailed relevance score
-    let score = 100; // Base score for meeting strict requirements
+    // Both requirements met — calculate detailed relevance score
+    let score = 100;
 
     // PRIORITY 1: Attack name in TITLE gets highest boost
     if (titleLower.includes(attack.name.toLowerCase())) {
@@ -587,8 +586,8 @@ class NewsDataService {
     // PRIORITY 3: Primary search keywords in title
     attack.searchKeywords.slice(0, 3).forEach((keyword: string, index: number) => {
       const keywordLower = keyword.toLowerCase();
-      const titleWeight = 30 - (index * 5); // 30, 25, 20
-      const descWeight = 15 - (index * 3); // 15, 12, 9
+      const titleWeight = 30 - (index * 5);
+      const descWeight = 15 - (index * 3);
 
       if (titleLower.includes(keywordLower)) {
         score += titleWeight;
@@ -629,25 +628,20 @@ class NewsDataService {
 
   /**
    * Check if article mentions the specific attack name, aliases, or primary keywords
-   * Now checks for word boundaries to avoid false matches
    */
   private hasExactAttackMatch(text: string, attack: any): boolean {
     const textLower = text.toLowerCase();
 
-    // Helper to check with word boundaries
     const containsPhrase = (haystack: string, needle: string): boolean => {
-      // For multi-word phrases, check exact substring
       if (needle.includes(' ')) {
         return haystack.includes(needle);
       }
-      // For single words, check with word boundaries
       const regex = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
       return regex.test(haystack);
     };
 
     // Check for attack name
-    const attackNameLower = attack.name.toLowerCase();
-    if (containsPhrase(textLower, attackNameLower)) {
+    if (containsPhrase(textLower, attack.name.toLowerCase())) {
       return true;
     }
 
@@ -665,7 +659,6 @@ class NewsDataService {
       containsPhrase(textLower, keyword.toLowerCase())
     ).length;
 
-    // Require at least 2 primary keywords to match
     if (keywordMatches >= 2) {
       return true;
     }
@@ -675,12 +668,10 @@ class NewsDataService {
   
   /**
    * Check if article has strong cybersecurity context
-   * Must contain multiple security-related terms to confirm it's a security article
    */
   private hasStrongCybersecurityContext(text: string): boolean {
     const textLower = text.toLowerCase();
 
-    // Primary cybersecurity indicators (strong signals)
     const primaryTerms = [
       'cybersecurity', 'cyber security', 'cyber attack', 'cyber threat',
       'security breach', 'data breach', 'security incident',
@@ -691,7 +682,6 @@ class NewsDataService {
       'cybercrime', 'cyberattack'
     ];
 
-    // Secondary security terms (supporting signals)
     const secondaryTerms = [
       'security', 'attack', 'breach', 'threat', 'vulnerability',
       'compromise', 'intrusion', 'penetration',
@@ -700,24 +690,18 @@ class NewsDataService {
       'encryption', 'firewall', 'antivirus'
     ];
 
-    // Exclude articles that are NOT about cybersecurity
+    // Exclude non-cybersecurity contexts
     const excludeContexts = [
-      // Legal contexts
       'attorney-client privilege', 'legal privilege', 'court case', 'lawsuit',
       'litigation', 'court ruling', 'legal precedent', 'judge ruled',
-      // Medical/health contexts
       'medical', 'healthcare', 'hospital', 'patient privacy', 'hipaa',
-      // Physical security contexts
       'border security', 'national security advisor', 'homeland security',
       'social security', 'job security', 'food security',
-      // Financial contexts (unless explicitly cyber-related)
       'securities and exchange', 'financial security'
     ];
 
-    // Check for exclusion contexts first
     for (const excludeContext of excludeContexts) {
       if (textLower.includes(excludeContext)) {
-        // Only reject if it doesn't also have strong cybersecurity terms
         const hasCyberTerm = primaryTerms.some(term => textLower.includes(term));
         if (!hasCyberTerm) {
           return false;
@@ -725,25 +709,15 @@ class NewsDataService {
       }
     }
 
-    // Count primary cybersecurity term matches
     const primaryMatches = primaryTerms.filter(term => textLower.includes(term)).length;
-
-    // If we have at least 1 primary term, it's likely a cybersecurity article
     if (primaryMatches >= 1) {
       return true;
     }
 
-    // Otherwise, require multiple secondary terms to indicate security context
     const secondaryMatches = secondaryTerms.filter(term => textLower.includes(term)).length;
-
-    // Need at least 3 secondary security terms if no primary terms
     return secondaryMatches >= 3;
   }
 
-
-  /**
-   * Get date from N days ago in ISO format
-   */
   private getDateDaysAgo(days: number): string {
     const date = new Date();
     date.setDate(date.getDate() - days);
@@ -1277,14 +1251,14 @@ Provide educational, well-commented code examples that demonstrate the attack te
 
 // Real content generation function
 async function generateDailyContent() {
-  const newsDataApiKey = process.env.NEWSDATA_API_KEY;
+  const newsApiKey = process.env.NEWS_API_KEY;
   const openrouterApiKey = process.env.OPENROUTER_API_KEY;
 
-  if (!newsDataApiKey || !openrouterApiKey) {
-    throw new Error('Missing required API keys: NEWSDATA_API_KEY and OPENROUTER_API_KEY must be set');
+  if (!newsApiKey || !openrouterApiKey) {
+    throw new Error('Missing required API keys: NEWS_API_KEY and OPENROUTER_API_KEY must be set');
   }
 
-  const newsService = new NewsDataService(newsDataApiKey);
+  const newsService = new NewsAPIService(newsApiKey);
   const aiService = new AIContentGenerator(openrouterApiKey);
 
   // Fetch recently used attacks from Supabase to avoid duplicates
@@ -1413,7 +1387,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check required environment variables
-    const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'NEWSDATA_API_KEY'];
+    const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'NEWS_API_KEY'];
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
     // Check for AI API key (OpenRouter)

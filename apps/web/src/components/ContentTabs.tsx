@@ -125,7 +125,7 @@ export default function ContentTabs({ blueTeam, redTeam }: ContentTabsProps) {
             }`}
           >
             {tabs[activeTab].title === 'Exploit Code' ? (
-              <div className="bg-gray-900/80 text-sm text-green-400 p-3 sm:p-4 rounded-xl overflow-x-auto font-mono backdrop-blur-sm border border-gray-500/20">
+              <div className="bg-black text-sm text-green-400 p-3 sm:p-4 rounded-xl overflow-x-auto font-mono border border-gray-700/50">
                 <pre><code>{tabs[activeTab].content}</code></pre>
               </div>
             ) : (

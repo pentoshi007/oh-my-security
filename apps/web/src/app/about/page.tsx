@@ -36,7 +36,7 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">2. News Gathering</h3>
               <p className="text-gray-600">
-                Using newsdata.io API, we fetch the latest cybersecurity news with strict relevance matching to ensure articles specifically match the selected attack topic.
+                Using NewsAPI.org, we fetch the latest cybersecurity news with advanced relevance matching to ensure articles specifically match the selected attack topic.
               </p>
             </div>
 
@@ -146,12 +146,12 @@ export default function AboutPage() {
             <div className="text-center">
               <div className="text-purple-600 font-mono text-sm mb-2">AI Generation</div>
               <div className="text-gray-900 font-semibold">OpenRouter AI</div>
-              <div className="text-gray-600 text-sm">GLM-4.5 Air (Free)</div>
+              <div className="text-gray-600 text-sm">GPT-OSS-120B (Free)</div>
             </div>
 
             <div className="text-center">
               <div className="text-orange-600 font-mono text-sm mb-2">News API</div>
-              <div className="text-gray-900 font-semibold">newsdata.io</div>
+              <div className="text-gray-900 font-semibold">NewsAPI.org</div>
               <div className="text-gray-600 text-sm">Strict relevance matching</div>
             </div>
 
