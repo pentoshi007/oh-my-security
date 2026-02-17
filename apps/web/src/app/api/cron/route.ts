@@ -783,34 +783,43 @@ CRITICAL FORMATTING RULES — follow these exactly:
 5. Do NOT place headings in the middle of a paragraph. Always put a blank line before and after any ### heading.
 6. Reference real-world examples from the provided news articles where relevant, citing the source name.
 
+LANGUAGE & ACCESSIBILITY RULES — equally important:
+7. Write in simple, conversational English. Imagine explaining this to a smart friend who has zero cybersecurity background.
+8. Every technical term MUST be explained on first use. Put a plain-English explanation in parentheses right after the term, e.g. "lateral movement (when attackers move from one compromised computer to other systems on the same network)".
+9. Use real-world analogies to make abstract concepts tangible, e.g. "Think of a firewall like a security guard at a building entrance — it checks who's allowed in and who isn't."
+10. Avoid jargon-heavy sentences. If a sentence has more than 2 technical terms, break it into shorter sentences and explain each term.
+11. Use "you" and "your" to make it feel personal and relevant, e.g. "If your organization uses cloud storage, this attack could target you."
+12. After explaining a technical concept, add a one-line "In simple terms:" or "Think of it this way:" summary where helpful.
+
 ABOUT SECTION:
-Write a detailed explanation covering:
-- What the attack is and why it matters in today's threat landscape
-- Historical context and evolution of this attack type
-- Current prevalence and recent trends
-- Economic and organizational impact with statistics where possible
+Write a detailed, beginner-friendly explanation covering:
+- What the attack is in plain language — explain it like someone has never heard of it
+- Why it matters in today's threat landscape and why ordinary people should care
+- Historical context and evolution of this attack type — tell the story
+- Current prevalence and recent trends with real numbers where possible
+- Economic and organizational impact with statistics
 - Reference specific incidents from the news articles provided
-Minimum 300 words. Use sub-headings to organize the content.
+Minimum 350 words. Use sub-headings to organize the content. Make every paragraph accessible to a beginner.
 
 HOW IT WORKS SECTION:
-Write a detailed technical breakdown covering:
-- Attack prerequisites and initial conditions
-- Step-by-step attack phases (use numbered lists): reconnaissance, initial access, execution, persistence, lateral movement, objective completion, cleanup/covering tracks
-- Technical mechanisms and protocols exploited
-- Common tools and frameworks used by attackers
-- Detection indicators and defensive signatures
+Write a detailed but easy-to-follow technical breakdown covering:
+- What conditions need to exist for this attack to work (explain prerequisites simply)
+- Step-by-step attack phases explained like a story (use numbered lists): reconnaissance, initial access, execution, persistence, lateral movement, objective completion, cleanup/covering tracks — explain each phase name in plain English
+- Technical mechanisms and protocols exploited — name the technology, then explain what it is and why it's vulnerable
+- Common tools and frameworks used by attackers — briefly explain what each tool does
+- Detection indicators and defensive signatures — explain what defenders look for and why
 - Reference how attacks in the news articles were conducted where applicable
-Minimum 300 words. Use sub-headings and numbered lists for clarity.
+Minimum 350 words. Use sub-headings and numbered lists for clarity.
 
 IMPACT SECTION:
-Write a detailed impact analysis covering:
-- Financial consequences (direct costs, indirect costs, long-term costs)
-- Operational disruption (downtime, recovery time, business continuity)
-- Strategic and reputational consequences
-- Regulatory and compliance implications
-- Supply chain and third-party effects
+Write a detailed impact analysis that anyone can understand, covering:
+- Financial consequences explained with relatable comparisons (direct costs, indirect costs, long-term costs)
+- Operational disruption — what actually happens day-to-day when this attack hits (downtime, recovery time, business continuity)
+- Strategic and reputational consequences — how it affects trust and brand image
+- Regulatory and compliance implications — what laws or rules come into play, explained simply
+- Supply chain and third-party effects — how it ripples beyond the initial victim
 - Include specific examples from the news articles about real-world impacts
-Minimum 250 words. Use sub-headings to separate impact categories.`;
+Minimum 300 words. Use sub-headings to separate impact categories.`;
 
     try {
       const content = await this.generateContent(prompt);
@@ -851,28 +860,36 @@ CRITICAL FORMATTING RULES — follow these exactly:
 6. For the EXPLOIT CODE SECTION, provide well-commented code blocks — do NOT use markdown formatting in that section, just plain code with comments.
 7. Reference real-world attack methods from the news articles where relevant.
 
+LANGUAGE & ACCESSIBILITY RULES — equally important:
+8. Write in simple, conversational English. Imagine explaining this to a smart friend who has zero cybersecurity background.
+9. Every technical term MUST be explained on first use. Put a plain-English explanation in parentheses right after the term, e.g. "OSINT (Open Source Intelligence — gathering information from publicly available sources like social media and websites)".
+10. Use real-world analogies to make attack concepts tangible, e.g. "Privilege escalation is like a regular employee finding an unlocked manager's office and using their computer to access restricted files."
+11. Avoid jargon-heavy sentences. If a sentence has more than 2 technical terms, break it into shorter sentences and explain each term.
+12. Use "you" and "your" to make it feel personal, e.g. "If you were the attacker, your first step would be..."
+13. In the EXPLOIT CODE SECTION, write code comments in plain English explaining not just WHAT each line does, but WHY an attacker would do it.
+
 OBJECTIVES SECTION:
-Write a detailed explanation of attacker goals covering:
-- Primary strategic objectives (financial gain, data theft, disruption, espionage)
-- Secondary objectives and opportunistic goals
-- Target selection criteria and victim profiling
+Write a detailed, beginner-friendly explanation of attacker goals covering:
+- Primary strategic objectives explained simply — what do attackers actually want? (money, data, chaos, spying)
+- Secondary objectives and opportunistic goals — what else might they grab along the way?
+- Target selection criteria and victim profiling — how do attackers pick their victims? Explain the thought process.
 - What attackers achieved in the real-world news examples provided
-- Motivation analysis (nation-state, criminal, hacktivist, insider)
-Minimum 300 words. Use sub-headings to organize.
+- Motivation analysis — explain each type (nation-state, criminal, hacktivist, insider) with a one-line description of who they are
+Minimum 350 words. Use sub-headings to organize.
 
 METHODOLOGY SECTION:
-Write a detailed multi-phase attack methodology covering:
-- Phase 1: Reconnaissance and target profiling (OSINT, scanning, enumeration)
-- Phase 2: Weaponization and payload development
-- Phase 3: Initial access and delivery mechanisms
-- Phase 4: Exploitation and code execution
-- Phase 5: Persistence and privilege escalation
-- Phase 6: Lateral movement and internal reconnaissance
-- Phase 7: Data collection and objective execution
-- Phase 8: Exfiltration and cleanup
-- Tools, frameworks, and TTPs used at each phase (reference MITRE ATT&CK where applicable)
+Write a detailed multi-phase attack methodology that reads like a story — walk the reader through each step as if narrating a heist movie:
+- Phase 1: Reconnaissance and target profiling — explain OSINT, scanning, enumeration in plain terms
+- Phase 2: Weaponization and payload development — what the attacker builds and why
+- Phase 3: Initial access and delivery mechanisms — how they get their foot in the door
+- Phase 4: Exploitation and code execution — what happens when the attack fires
+- Phase 5: Persistence and privilege escalation — how they stay in and gain more power
+- Phase 6: Lateral movement and internal reconnaissance — how they spread through the network
+- Phase 7: Data collection and objective execution — grabbing what they came for
+- Phase 8: Exfiltration and cleanup — getting the stolen goods out and covering tracks
+- Tools, frameworks, and TTPs used at each phase — name each tool and explain what it does in one sentence (reference MITRE ATT&CK where applicable, and explain what MITRE ATT&CK is on first mention)
 - Insights from how the attacks in the news articles were conducted
-Minimum 350 words. Use numbered phases with sub-headings for each.
+Minimum 400 words. Use numbered phases with sub-headings for each.
 
 EXPLOIT CODE SECTION:
 Provide educational, well-commented code examples that demonstrate the attack technique. Include:
@@ -881,9 +898,9 @@ Provide educational, well-commented code examples that demonstrate the attack te
 # Environment: Controlled lab / authorized penetration test only
 
 - Multiple code snippets showing different aspects of the attack
-- Clear comments explaining what each section does and why
-- Detection signatures or indicators that defenders should watch for
-- Mitigation code showing how to defend against each technique`;
+- Clear comments explaining what each section does, WHY it works, and what a defender would see
+- Detection signatures or indicators that defenders should watch for — explain each one
+- Mitigation code showing how to defend against each technique, with comments explaining the defense logic`;
 
     try {
       const content = await this.generateContent(prompt);
@@ -933,7 +950,7 @@ Provide educational, well-commented code examples that demonstrate the attack te
           messages: [
             {
               role: 'system',
-              content: 'You are a senior cybersecurity expert. Follow the formatting instructions in the user message EXACTLY. Always use the EXACT section markers specified. Your response must be comprehensive and detailed — minimum 300 words per section.',
+              content: 'You are a senior cybersecurity expert and gifted educator. Write in simple, clear language that a complete beginner can understand — but never sacrifice depth or accuracy. When you use a technical term, immediately explain it in plain English in parentheses, e.g. "SQL injection (a trick where attackers slip malicious database commands into a website\'s input fields)". Use analogies and real-world comparisons to make complex ideas click. Follow the formatting instructions in the user message EXACTLY. Always use the EXACT section markers specified. Your response must be comprehensive, detailed, and thorough — minimum 350 words per section. Aim for longer, richer explanations rather than shorter ones.',
             },
             {
               role: 'user',
