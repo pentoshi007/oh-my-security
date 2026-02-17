@@ -836,51 +836,52 @@ Minimum 300 words. Use sub-headings to separate impact categories.`;
   async generateRedTeamContent(attack: any, newsArticles: any[]) {
     const newsContext = this.createNewsContext(newsArticles);
 
-    const prompt = `You are a senior red team operator writing in-depth educational content for "Oh-My-Security", a daily cybersecurity education platform.
-
-Generate a comprehensive, well-structured offensive (Red Team) analysis for the attack type: "${attack.name}".
-
+    const attackContext = `Attack Type: "${attack.name}"
 Attack Description: ${attack.description}
 Attack Category: ${attack.category}
 Attack Difficulty: ${attack.difficulty}
 
 Recent Real-World Examples from News:
-${newsContext}
+${newsContext}`;
 
-CRITICAL FORMATTING RULES — follow these exactly:
-1. Your response MUST begin with "OBJECTIVES SECTION:" on its own line. No preamble, no greetings.
-2. Use the exact section markers: "OBJECTIVES SECTION:", "METHODOLOGY SECTION:", "EXPLOIT CODE SECTION:" — each on its own line.
-3. Do NOT add markdown formatting (like ** or ##) to the section marker lines themselves.
-4. WITHIN the OBJECTIVES and METHODOLOGY sections, use proper markdown formatting:
-   - Use ### for sub-headings (e.g., "### Primary Goals", "### Phase 1: Reconnaissance")
-   - Use **bold** for key terms, tools, techniques, and important concepts
-   - Use bullet points (- ) for listing items, tools, or indicators
-   - Use numbered lists (1. 2. 3.) for sequential steps or phases
-   - Separate paragraphs with a blank line between them
-   - Keep paragraphs focused — one idea per paragraph, 3-5 sentences each
-5. Do NOT place headings in the middle of a paragraph. Always put a blank line before and after any ### heading.
-6. For the EXPLOIT CODE SECTION, provide well-commented code blocks — do NOT use markdown formatting in that section, just plain code with comments.
-7. Reference real-world attack methods from the news articles where relevant.
+    const sharedRules = `FORMATTING RULES:
+- Use ### for sub-headings (e.g., "### Primary Goals", "### Phase 1: Reconnaissance")
+- Use **bold** for key terms, tools, techniques, and important concepts
+- Use bullet points (- ) for listing items, tools, or indicators
+- Use numbered lists (1. 2. 3.) for sequential steps or phases
+- Separate paragraphs with a blank line between them
+- Keep paragraphs focused — one idea per paragraph, 3-5 sentences each
+- Do NOT place headings in the middle of a paragraph. Always put a blank line before and after any ### heading.
 
-LANGUAGE & ACCESSIBILITY RULES — equally important:
-8. Write in simple, conversational English. Imagine explaining this to a smart friend who has zero cybersecurity background.
-9. Every technical term MUST be explained on first use. Put a plain-English explanation in parentheses right after the term, e.g. "OSINT (Open Source Intelligence — gathering information from publicly available sources like social media and websites)".
-10. Use real-world analogies to make attack concepts tangible, e.g. "Privilege escalation is like a regular employee finding an unlocked manager's office and using their computer to access restricted files."
-11. Avoid jargon-heavy sentences. If a sentence has more than 2 technical terms, break it into shorter sentences and explain each term.
-12. Use "you" and "your" to make it feel personal, e.g. "If you were the attacker, your first step would be..."
-13. In the EXPLOIT CODE SECTION, write code comments in plain English explaining not just WHAT each line does, but WHY an attacker would do it.
+LANGUAGE RULES:
+- Write in simple, conversational English. Imagine explaining this to a smart friend who has zero cybersecurity background.
+- Every technical term MUST be explained on first use. Put a plain-English explanation in parentheses right after the term, e.g. "OSINT (Open Source Intelligence — gathering information from publicly available sources like social media and websites)".
+- Use real-world analogies to make attack concepts tangible, e.g. "Privilege escalation is like a regular employee finding an unlocked manager's office and using their computer to access restricted files."
+- Avoid jargon-heavy sentences. If a sentence has more than 2 technical terms, break it into shorter sentences and explain each term.
+- Use "you" and "your" to make it feel personal, e.g. "If you were the attacker, your first step would be..."`;
 
-OBJECTIVES SECTION:
-Write a detailed, beginner-friendly explanation of attacker goals covering:
+    const objectivesPrompt = `You are a senior red team operator writing in-depth educational content for "Oh-My-Security", a daily cybersecurity education platform.
+
+${attackContext}
+
+${sharedRules}
+
+Write a detailed, beginner-friendly explanation of attacker goals for ${attack.name} covering:
 - Primary strategic objectives explained simply — what do attackers actually want? (money, data, chaos, spying)
 - Secondary objectives and opportunistic goals — what else might they grab along the way?
 - Target selection criteria and victim profiling — how do attackers pick their victims? Explain the thought process.
 - What attackers achieved in the real-world news examples provided
 - Motivation analysis — explain each type (nation-state, criminal, hacktivist, insider) with a one-line description of who they are
-Minimum 350 words. Use sub-headings to organize.
 
-METHODOLOGY SECTION:
-Write a detailed multi-phase attack methodology that reads like a story — walk the reader through each step as if narrating a heist movie:
+Minimum 350 words. Use sub-headings to organize. Do NOT include any section markers. Just write the content directly.`;
+
+    const methodologyPrompt = `You are a senior red team operator writing in-depth educational content for "Oh-My-Security", a daily cybersecurity education platform.
+
+${attackContext}
+
+${sharedRules}
+
+Write a detailed multi-phase attack methodology for ${attack.name} that reads like a story — walk the reader through each step as if narrating a heist movie:
 - Phase 1: Reconnaissance and target profiling — explain OSINT, scanning, enumeration in plain terms
 - Phase 2: Weaponization and payload development — what the attacker builds and why
 - Phase 3: Initial access and delivery mechanisms — how they get their foot in the door
@@ -891,23 +892,55 @@ Write a detailed multi-phase attack methodology that reads like a story — walk
 - Phase 8: Exfiltration and cleanup — getting the stolen goods out and covering tracks
 - Tools, frameworks, and TTPs used at each phase — name each tool and explain what it does in one sentence (reference MITRE ATT&CK where applicable, and explain what MITRE ATT&CK is on first mention)
 - Insights from how the attacks in the news articles were conducted
-Minimum 400 words. Use numbered phases with sub-headings for each.
 
-EXPLOIT CODE SECTION:
-Provide educational, well-commented code examples that demonstrate the attack technique. Include:
+Minimum 400 words. Use numbered phases with sub-headings for each. Do NOT include any section markers. Just write the content directly.`;
+
+    const exploitCodePrompt = `You are a senior red team operator writing educational exploit code examples for "Oh-My-Security", a daily cybersecurity education platform.
+
+${attackContext}
+
+Write educational, well-commented code examples that demonstrate the ${attack.name} technique.
+
+Start with this header:
 # ${attack.name} — Educational Simulation Framework
 # WARNING: For authorized educational and testing purposes only
 # Environment: Controlled lab / authorized penetration test only
 
+Include:
 - Multiple code snippets showing different aspects of the attack
-- Clear comments explaining what each section does, WHY it works, and what a defender would see
+- Clear comments in plain English explaining what each section does, WHY it works, and what a defender would see
+- Write code comments so a beginner can understand — explain not just WHAT each line does, but WHY an attacker would do it
 - Detection signatures or indicators that defenders should watch for — explain each one
-- Mitigation code showing how to defend against each technique, with comments explaining the defense logic`;
+- Mitigation code showing how to defend against each technique, with comments explaining the defense logic
+
+Do NOT use markdown formatting. Just write plain code with comments. Do NOT include any section markers.`;
 
     try {
-      const content = await this.generateContent(prompt);
-      console.log('✅ AI Red Team content generated successfully');
-      return this.parseRedTeamContent(content, attack.name);
+      // Run all 3 sections in parallel for speed
+      console.log('🔄 [Red Team] Generating 3 sections in parallel...');
+      const [objectivesContent, methodologyContent, exploitContent] = await Promise.all([
+        this.generateContent(objectivesPrompt).catch(err => {
+          console.log('❌ Red Team objectives generation failed:', err instanceof Error ? err.message : 'Unknown');
+          return '';
+        }),
+        this.generateContent(methodologyPrompt).catch(err => {
+          console.log('❌ Red Team methodology generation failed:', err instanceof Error ? err.message : 'Unknown');
+          return '';
+        }),
+        this.generateContent(exploitCodePrompt).catch(err => {
+          console.log('❌ Red Team exploit code generation failed:', err instanceof Error ? err.message : 'Unknown');
+          return '';
+        }),
+      ]);
+
+      console.log('✅ AI Red Team content generated — objectives:', objectivesContent.length, '| methodology:', methodologyContent.length, '| exploit:', exploitContent.length);
+
+      const fallback = this.getFallbackRedTeamContent(attack.name);
+      return {
+        objectives: this.cleanAndFormatMarkdown(objectivesContent) || fallback.objectives,
+        methodology: this.cleanAndFormatMarkdown(methodologyContent) || fallback.methodology,
+        exploitCode: this.cleanExploitCode(exploitContent) || fallback.exploitCode,
+      };
     } catch (error) {
       console.log('❌ AI Red Team generation failed:', error instanceof Error ? error.message : 'Unknown error');
       return this.getFallbackRedTeamContent(attack.name);
