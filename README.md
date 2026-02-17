@@ -16,14 +16,14 @@ Our mission is to make cybersecurity knowledge accessible, current, and practica
 
 ## ✨ Features
 
-- **Automated Daily Content** – Vercel cron job runs daily at 12:01 AM IST, generating fresh content about a different attack methodology using Google Gemini AI
+- **Automated Daily Content** – Vercel cron job runs daily at 12:01 AM IST, generating fresh content about a different attack methodology using OpenRouter AI (z-ai/glm-4.5-air:free)
 - **Modern Next.js Frontend** – Responsive UI built with Next.js 15, Tailwind CSS, and DaisyUI, featuring distinct blue sections for defense and red sections for offense
 - **25+ Attack Methodologies** – Comprehensive database covering SQL injection, XSS, ransomware, phishing, and 20+ other attack types
 - **Strict News Relevance** – Powered by newsdata.io with ultra-strict matching to ensure articles specifically match the daily attack topic
 - **Enhanced Archive System** – Real-time search, filtering by category, sorting options, and instant results for browsing all past content
 - **Supabase Database** – Lightning-fast content storage and retrieval with PostgreSQL, no git conflicts
 - **Email Subscriptions** – MongoDB-powered subscription system for daily updates and notifications
-- **100% Free Infrastructure** – Leverages free-tier services: newsdata.io, Google Gemini AI, Supabase, MongoDB Atlas, and Vercel
+- **100% Free Infrastructure** – Leverages free-tier services: newsdata.io, OpenRouter AI, Supabase, MongoDB Atlas, and Vercel
 
 ---
 
@@ -34,7 +34,7 @@ Oh-My-Security operates on a fully automated pipeline:
 1. **Daily Cron Job**: Vercel cron runs at 12:01 AM IST (6:31 PM UTC), triggering `/api/cron`
 2. **Attack Selection**: Intelligently selects next attack from 25+ methodologies, avoiding recently covered topics
 3. **News Gathering**: Fetches relevant cybersecurity articles from newsdata.io with strict topic matching
-4. **AI Content Generation**: Google Gemini AI generates comprehensive breakdown with:
+4. **AI Content Generation**: OpenRouter AI generates comprehensive breakdown with:
    - Attack overview and real-world context
    - Blue Team defense strategies and detection methods
    - Red Team attack techniques and exploitation details
@@ -47,7 +47,7 @@ flowchart TD
     A[Vercel Cron - 12:01 AM IST] --> B["API Cron Endpoint"]
     B --> C[Select Attack Methodology]
     C --> D[Fetch News - newsdata.io]
-    D --> E[Generate Content - Gemini AI]
+    D --> E[Generate Content - OpenRouter AI]
     E --> F[Store in Supabase]
     F --> G[Next.js App + Archive]
     G --> H[Users Access Content]
@@ -61,7 +61,7 @@ flowchart TD
 |:------|:-----------|
 | **Frontend** | Next.js 15, React, Tailwind CSS, DaisyUI |
 | **Backend** | Next.js API Routes, TypeScript |
-| **AI Generation** | Google Gemini AI (Gemini 2.5 Flash) |
+| **AI Generation** | OpenRouter AI (z-ai/glm-4.5-air:free) |
 | **News API** | newsdata.io with strict relevance matching |
 | **Database** | Supabase (PostgreSQL) for content storage |
 | **Subscriptions** | MongoDB Atlas for email management |
@@ -100,7 +100,7 @@ flowchart TD
 - Supabase account (free tier)
 - MongoDB Atlas account (free tier)
 - newsdata.io API key (free tier)
-- Google AI Studio API key (free tier)
+- OpenRouter API key (free tier)
 
 ### Installation
 
@@ -127,7 +127,7 @@ flowchart TD
 
    # Content Generation (Required)
    NEWSDATA_API_KEY=your_newsdata_api_key
-   GOOGLE_API_KEY=your_gemini_api_key
+   OPENROUTER_API_KEY=your_openrouter_api_key
 
    # Email Subscriptions (Required)
    MONGODB_URI=your_mongodb_connection_string
@@ -139,7 +139,7 @@ flowchart TD
    **Get your API keys:**
    - **Supabase**: [supabase.com](https://supabase.com) → Project Settings → API
    - **newsdata.io**: [newsdata.io](https://newsdata.io) → API Key
-   - **Google Gemini**: [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+   - **OpenRouter**: [openrouter.ai/keys](https://openrouter.ai/keys)
    - **MongoDB**: [mongodb.com/atlas](https://mongodb.com/atlas) → Connect → Connection String
    - **CRON_SECRET**: Generate with `openssl rand -base64 32`
 

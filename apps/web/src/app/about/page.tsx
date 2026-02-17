@@ -47,7 +47,7 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">3. AI Generation</h3>
               <p className="text-gray-600">
-                Google Gemini AI analyzes the attack methodology and generates comprehensive educational content with detailed blue team and red team perspectives.
+                OpenRouter AI analyzes the attack methodology and generates comprehensive educational content with detailed blue team and red team perspectives.
               </p>
             </div>
           </div>
@@ -145,8 +145,8 @@ export default function AboutPage() {
 
             <div className="text-center">
               <div className="text-purple-600 font-mono text-sm mb-2">AI Generation</div>
-              <div className="text-gray-900 font-semibold">Google Gemini</div>
-              <div className="text-gray-600 text-sm">Gemini 2.5 Flash model</div>
+              <div className="text-gray-900 font-semibold">OpenRouter AI</div>
+              <div className="text-gray-600 text-sm">GLM-4.5 Air (Free)</div>
             </div>
 
             <div className="text-center">

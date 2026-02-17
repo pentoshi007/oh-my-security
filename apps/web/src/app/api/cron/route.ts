@@ -751,15 +751,16 @@ class NewsDataService {
   }
 }
 
-// AI Content Generator using Google Gemini (matching original comprehensive approach)
+// AI Content Generator using OpenRouter (z-ai/glm-4.5-air:free)
 class AIContentGenerator {
   constructor(private apiKey: string) { }
 
   async generateBlueTeamContent(attack: any, newsArticles: any[]) {
     const newsContext = this.createNewsContext(newsArticles);
 
-    const prompt = `You are a senior cybersecurity analyst writing educational content for 'Oh-My-Security'.
-Your task is to generate a detailed, structured, and professional analysis for the attack type: "${attack.name}".
+    const prompt = `You are a senior cybersecurity analyst writing in-depth educational content for "Oh-My-Security", a daily cybersecurity education platform.
+
+Generate a comprehensive, well-structured defensive (Blue Team) analysis for the attack type: "${attack.name}".
 
 Attack Description: ${attack.description}
 Attack Category: ${attack.category}
@@ -768,28 +769,55 @@ Known Impacts: ${attack.impacts.join(', ')}
 Recent Real-World Examples from News:
 ${newsContext}
 
-IMPORTANT:
-- Your response must begin DIRECTLY with "ABOUT SECTION:". Do not add any preamble.
-- Follow the specified format exactly. Do not add extra markdown like asterisks to the section titles.
-- Reference the real-world examples from the news articles provided when relevant.
-
-Format:
+CRITICAL FORMATTING RULES — follow these exactly:
+1. Your response MUST begin with "ABOUT SECTION:" on its own line. No preamble, no greetings.
+2. Use the exact section markers: "ABOUT SECTION:", "HOW IT WORKS SECTION:", "IMPACT SECTION:" — each on its own line.
+3. Do NOT add markdown formatting (like ** or ##) to the section marker lines themselves.
+4. WITHIN each section, use proper markdown formatting:
+   - Use ### for sub-headings within a section (e.g., "### Threat Landscape", "### Economic Impact")
+   - Use **bold** for key terms, attack names, and important concepts
+   - Use bullet points (- ) for listing items, indicators, or short facts
+   - Use numbered lists (1. 2. 3.) for sequential steps or phases
+   - Separate paragraphs with a blank line between them
+   - Keep paragraphs focused — one idea per paragraph, 3-5 sentences each
+5. Do NOT place headings in the middle of a paragraph. Always put a blank line before and after any ### heading.
+6. Reference real-world examples from the provided news articles where relevant, citing the source name.
 
 ABOUT SECTION:
-[Detailed explanation of what the attack is, its importance, threat landscape, and economic impact. Reference recent incidents from the news articles. Minimum 200 words.]
+Write a detailed explanation covering:
+- What the attack is and why it matters in today's threat landscape
+- Historical context and evolution of this attack type
+- Current prevalence and recent trends
+- Economic and organizational impact with statistics where possible
+- Reference specific incidents from the news articles provided
+Minimum 300 words. Use sub-headings to organize the content.
 
 HOW IT WORKS SECTION:
-Provide a detailed technical breakdown of how the attack works, including phases like initial access, persistence, lateral movement, objective execution, and cleanup. Use numbered lists or clear paragraphs. When possible, reference how the attacks in the news articles were conducted.
+Write a detailed technical breakdown covering:
+- Attack prerequisites and initial conditions
+- Step-by-step attack phases (use numbered lists): reconnaissance, initial access, execution, persistence, lateral movement, objective completion, cleanup/covering tracks
+- Technical mechanisms and protocols exploited
+- Common tools and frameworks used by attackers
+- Detection indicators and defensive signatures
+- Reference how attacks in the news articles were conducted where applicable
+Minimum 300 words. Use sub-headings and numbered lists for clarity.
 
 IMPACT SECTION:
-Provide a detailed impact analysis, covering financial, operational, and strategic/reputational consequences. Include specific examples from the news articles about real-world impacts.`;
+Write a detailed impact analysis covering:
+- Financial consequences (direct costs, indirect costs, long-term costs)
+- Operational disruption (downtime, recovery time, business continuity)
+- Strategic and reputational consequences
+- Regulatory and compliance implications
+- Supply chain and third-party effects
+- Include specific examples from the news articles about real-world impacts
+Minimum 250 words. Use sub-headings to separate impact categories.`;
 
     try {
       const content = await this.generateContent(prompt);
-      console.log('✅ AI Blue Team Success (Google Gemini)');
+      console.log('✅ AI Blue Team content generated successfully');
       return this.parseBlueTeamContent(content, attack.name);
     } catch (error) {
-      console.log('❌ AI Blue Team Error (Google Gemini):', error instanceof Error ? error.message : 'Unknown error');
+      console.log('❌ AI Blue Team generation failed:', error instanceof Error ? error.message : 'Unknown error');
       return this.getFallbackBlueTeamContent(attack.name);
     }
   }
@@ -797,8 +825,9 @@ Provide a detailed impact analysis, covering financial, operational, and strateg
   async generateRedTeamContent(attack: any, newsArticles: any[]) {
     const newsContext = this.createNewsContext(newsArticles);
 
-    const prompt = `You are a senior red team operator writing educational content for 'Oh-My-Security'.
-Your task is to generate a detailed, structured, and professional analysis of offensive techniques for the attack type: "${attack.name}".
+    const prompt = `You are a senior red team operator writing in-depth educational content for "Oh-My-Security", a daily cybersecurity education platform.
+
+Generate a comprehensive, well-structured offensive (Red Team) analysis for the attack type: "${attack.name}".
 
 Attack Description: ${attack.description}
 Attack Category: ${attack.category}
@@ -807,33 +836,61 @@ Attack Difficulty: ${attack.difficulty}
 Recent Real-World Examples from News:
 ${newsContext}
 
-IMPORTANT:
-- Your response must begin DIRECTLY with "OBJECTIVES SECTION:". Do not add any preamble.
-- Follow the specified format exactly. Do not add extra markdown like asterisks to the section titles.
-- For the EXPLOIT CODE SECTION, provide functional, commented, educational code examples.
-- Reference the real-world attack methods from the news when relevant.
-
-Format:
+CRITICAL FORMATTING RULES — follow these exactly:
+1. Your response MUST begin with "OBJECTIVES SECTION:" on its own line. No preamble, no greetings.
+2. Use the exact section markers: "OBJECTIVES SECTION:", "METHODOLOGY SECTION:", "EXPLOIT CODE SECTION:" — each on its own line.
+3. Do NOT add markdown formatting (like ** or ##) to the section marker lines themselves.
+4. WITHIN the OBJECTIVES and METHODOLOGY sections, use proper markdown formatting:
+   - Use ### for sub-headings (e.g., "### Primary Goals", "### Phase 1: Reconnaissance")
+   - Use **bold** for key terms, tools, techniques, and important concepts
+   - Use bullet points (- ) for listing items, tools, or indicators
+   - Use numbered lists (1. 2. 3.) for sequential steps or phases
+   - Separate paragraphs with a blank line between them
+   - Keep paragraphs focused — one idea per paragraph, 3-5 sentences each
+5. Do NOT place headings in the middle of a paragraph. Always put a blank line before and after any ### heading.
+6. For the EXPLOIT CODE SECTION, provide well-commented code blocks — do NOT use markdown formatting in that section, just plain code with comments.
+7. Reference real-world attack methods from the news articles where relevant.
 
 OBJECTIVES SECTION:
-[Detailed explanation of strategic goals. Reference what attackers achieved in the real-world examples. Minimum 200 words.]
+Write a detailed explanation of attacker goals covering:
+- Primary strategic objectives (financial gain, data theft, disruption, espionage)
+- Secondary objectives and opportunistic goals
+- Target selection criteria and victim profiling
+- What attackers achieved in the real-world news examples provided
+- Motivation analysis (nation-state, criminal, hacktivist, insider)
+Minimum 300 words. Use sub-headings to organize.
 
 METHODOLOGY SECTION:
-[Provide a detailed, multi-phase attack methodology from reconnaissance to cleanup, focusing on offensive techniques. Include insights from how the attacks in the news were conducted.]
+Write a detailed multi-phase attack methodology covering:
+- Phase 1: Reconnaissance and target profiling (OSINT, scanning, enumeration)
+- Phase 2: Weaponization and payload development
+- Phase 3: Initial access and delivery mechanisms
+- Phase 4: Exploitation and code execution
+- Phase 5: Persistence and privilege escalation
+- Phase 6: Lateral movement and internal reconnaissance
+- Phase 7: Data collection and objective execution
+- Phase 8: Exfiltration and cleanup
+- Tools, frameworks, and TTPs used at each phase (reference MITRE ATT&CK where applicable)
+- Insights from how the attacks in the news articles were conducted
+Minimum 350 words. Use numbered phases with sub-headings for each.
 
 EXPLOIT CODE SECTION:
-[Provide educational, functional code examples for demonstrating the attack, with comments. For example:
-# ${attack.name} Educational Simulation Framework
+Provide educational, well-commented code examples that demonstrate the attack technique. Include:
+# ${attack.name} — Educational Simulation Framework
 # WARNING: For authorized educational and testing purposes only
-...
-]`;
+# Environment: Controlled lab / authorized penetration test only
+
+- Multiple code snippets showing different aspects of the attack
+- Clear comments explaining what each section does and why
+- Detection signatures or indicators that defenders should watch for
+- Mitigation code showing how to defend against each technique`;
 
     try {
       const content = await this.generateContent(prompt);
-      console.log('✅ AI Red Team Success (Google Gemini)');
+      console.log('✅ AI Red Team content generated successfully');
       return this.parseRedTeamContent(content, attack.name);
     } catch (error) {
-      console.log('❌ AI Red Team Error (Google Gemini):', error instanceof Error ? error.message : 'Unknown error');
+      console.log('❌ AI Red Team generation failed:', error instanceof Error ? error.message : 'Unknown error');
       return this.getFallbackRedTeamContent(attack.name);
     }
   }
@@ -860,37 +917,43 @@ EXPLOIT CODE SECTION:
 
   private async generateContent(prompt: string): Promise<string> {
     try {
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + this.apiKey, {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://oh-my-security.vercel.app',
+          'X-Title': 'Oh-My-Security',
+        },
         body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.9,
-            maxOutputTokens: 8192,
-          },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          ]
+          model: 'z-ai/glm-4.5-air:free',
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            }
+          ],
+          temperature: 0.7,
+          top_p: 0.9,
+          max_tokens: 8192,
         })
       });
 
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorBody}`);
+      }
+
       const data = await response.json();
-      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const generatedText = data.choices?.[0]?.message?.content;
 
       if (!generatedText) {
-        throw new Error('AI generation failed: No response text from Gemini.');
+        throw new Error('AI generation failed: No response text from OpenRouter.');
       }
 
       return generatedText;
     } catch (error) {
-      throw new Error(`Google Gemini API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`OpenRouter API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -908,19 +971,14 @@ EXPLOIT CODE SECTION:
       return text.substring(startIndex + startMarker.length, endIndex).trim();
     };
 
-    const cleanAndFormat = (text: string): string => {
-      if (!text) return '';
-      return text.replace(/^\s*[-*•]\s*/gm, '• ').replace(/^\s*(\d+)\.\s*/gm, '$1. ').replace(/\n\s*\n\s*\n/g, '\n\n').replace(/^\s+/gm, '').trim();
-    };
-
     const aboutSection = extractSection(content, 'ABOUT SECTION:', ['HOW IT WORKS SECTION:']);
     const howItWorksSection = extractSection(content, 'HOW IT WORKS SECTION:', ['IMPACT SECTION:']);
     const impactSection = extractSection(content, 'IMPACT SECTION:', []);
 
     return {
-      about: cleanAndFormat(aboutSection) || this.getFallbackBlueTeamContent(attackType).about,
-      howItWorks: cleanAndFormat(howItWorksSection) || this.getFallbackBlueTeamContent(attackType).howItWorks,
-      impact: cleanAndFormat(impactSection) || this.getFallbackBlueTeamContent(attackType).impact,
+      about: this.cleanAndFormatMarkdown(aboutSection) || this.getFallbackBlueTeamContent(attackType).about,
+      howItWorks: this.cleanAndFormatMarkdown(howItWorksSection) || this.getFallbackBlueTeamContent(attackType).howItWorks,
+      impact: this.cleanAndFormatMarkdown(impactSection) || this.getFallbackBlueTeamContent(attackType).impact,
     };
   }
 
@@ -938,20 +996,52 @@ EXPLOIT CODE SECTION:
       return text.substring(startIndex + startMarker.length, endIndex).trim();
     };
 
-    const cleanAndFormat = (text: string): string => {
-      if (!text) return '';
-      return text.replace(/^\s*[-*•]\s*/gm, '• ').replace(/^\s*(\d+)\.\s*/gm, '$1. ').replace(/\n\s*\n\s*\n/g, '\n\n').replace(/^\s+/gm, '').trim();
-    };
-
     const objectivesSection = extractSection(content, 'OBJECTIVES SECTION:', ['METHODOLOGY SECTION:']);
     const methodologySection = extractSection(content, 'METHODOLOGY SECTION:', ['EXPLOIT CODE SECTION:']);
     const exploitSection = extractSection(content, 'EXPLOIT CODE SECTION:', []);
 
     return {
-      objectives: cleanAndFormat(objectivesSection) || this.getFallbackRedTeamContent(attackType).objectives,
-      methodology: cleanAndFormat(methodologySection) || this.getFallbackRedTeamContent(attackType).methodology,
-      exploitCode: cleanAndFormat(exploitSection) || this.getFallbackRedTeamContent(attackType).exploitCode,
+      objectives: this.cleanAndFormatMarkdown(objectivesSection) || this.getFallbackRedTeamContent(attackType).objectives,
+      methodology: this.cleanAndFormatMarkdown(methodologySection) || this.getFallbackRedTeamContent(attackType).methodology,
+      exploitCode: this.cleanExploitCode(exploitSection) || this.getFallbackRedTeamContent(attackType).exploitCode,
     };
+  }
+
+  private cleanAndFormatMarkdown(text: string): string {
+    if (!text) return '';
+    let formatted = text;
+    // Strip stray section markers
+    formatted = formatted.replace(/^(ABOUT|HOW IT WORKS|IMPACT|OBJECTIVES|METHODOLOGY|EXPLOIT CODE)\s*SECTION:\s*/gim, '');
+    // Normalize headings to ###
+    formatted = formatted.replace(/^#{1,2}\s+/gm, '### ');
+    // Ensure blank line before headings
+    formatted = formatted.replace(/([^\n])\n(###\s)/g, '$1\n\n$2');
+    // Ensure blank line after headings
+    formatted = formatted.replace(/(###\s.+)\n([^\n#])/g, '$1\n\n$2');
+    // Normalize bullets to -
+    formatted = formatted.replace(/^\s*[•*+]\s+/gm, '- ');
+    // Ensure spacing around list blocks
+    formatted = formatted.replace(/([^\n-])\n(- )/g, '$1\n\n$2');
+    formatted = formatted.replace(/(- .+)\n([^\n-])/g, '$1\n\n$2');
+    // Normalize numbered lists
+    formatted = formatted.replace(/^\s*(\d+)\)\s+/gm, '$1. ');
+    // Collapse excessive blank lines
+    formatted = formatted.replace(/\n{3,}/g, '\n\n');
+    // Trim leading whitespace on non-list lines
+    formatted = formatted.replace(/^[ \t]+(?![-\d])/gm, '');
+    formatted = formatted.trim();
+    return formatted;
+  }
+
+  private cleanExploitCode(text: string): string {
+    if (!text) return '';
+    let code = text;
+    // Strip markdown code fences
+    code = code.replace(/^```[\w]*\s*$/gm, '');
+    code = code.replace(/\n```\s*$/g, '');
+    // Collapse excessive blank lines
+    code = code.replace(/\n{3,}/g, '\n\n');
+    return code.trim();
   }
 
   private getFallbackBlueTeamContent(attackType: string) {
@@ -1010,14 +1100,14 @@ EXPLOIT CODE SECTION:
 // Real content generation function
 async function generateDailyContent() {
   const newsDataApiKey = process.env.NEWSDATA_API_KEY;
-  const googleApiKey = process.env.GOOGLE_API_KEY || process.env.HF_TOKEN;
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
 
-  if (!newsDataApiKey || !googleApiKey) {
-    throw new Error('Missing required API keys: NEWSDATA_API_KEY and (GOOGLE_API_KEY or HF_TOKEN) must be set');
+  if (!newsDataApiKey || !openrouterApiKey) {
+    throw new Error('Missing required API keys: NEWSDATA_API_KEY and OPENROUTER_API_KEY must be set');
   }
 
   const newsService = new NewsDataService(newsDataApiKey);
-  const aiService = new AIContentGenerator(googleApiKey);
+  const aiService = new AIContentGenerator(openrouterApiKey);
 
   // Fetch recently used attacks from Supabase to avoid duplicates
   mockSpinner.start('Checking recently used attack types...');
@@ -1148,9 +1238,9 @@ export async function GET(request: NextRequest) {
     const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'NEWSDATA_API_KEY'];
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
-    // Check for AI API key (either Google or HuggingFace)
-    if (!process.env.GOOGLE_API_KEY && !process.env.HF_TOKEN) {
-      missingVars.push('GOOGLE_API_KEY or HF_TOKEN');
+    // Check for AI API key (OpenRouter)
+    if (!process.env.OPENROUTER_API_KEY) {
+      missingVars.push('OPENROUTER_API_KEY');
     }
 
     if (missingVars.length > 0) {

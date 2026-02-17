@@ -9,10 +9,10 @@ async function testGenerator() {
 
         // Test environment variables
         const newsApiKey = process.env.NEWS_API_KEY;
-        const googleApiKey = process.env.GOOGLE_API_KEY;
+        const openrouterApiKey = process.env.OPENROUTER_API_KEY;
 
-        if (!newsApiKey || !googleApiKey) {
-            console.error('❌ Missing API keys');
+        if (!newsApiKey || !openrouterApiKey) {
+            console.error('❌ Missing API keys (NEWS_API_KEY, OPENROUTER_API_KEY)');
             return;
         }
 
@@ -29,7 +29,7 @@ async function testGenerator() {
         console.log(`✅ Found ${articles.length} articles`);
 
         // Test AI generator
-        const aiService = new AIContentGenerator(googleApiKey);
+        const aiService = new AIContentGenerator(openrouterApiKey);
         console.log('🤖 Generating content...');
 
         const blueTeamContent = await aiService.generateBlueTeamContent(selectedAttack, articles);
