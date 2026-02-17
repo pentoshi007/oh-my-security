@@ -860,27 +860,24 @@ LANGUAGE RULES:
 - Avoid jargon-heavy sentences. If a sentence has more than 2 technical terms, break it into shorter sentences and explain each term.
 - Use "you" and "your" to make it feel personal, e.g. "If you were the attacker, your first step would be..."`;
 
-    const objectivesPrompt = `You are a senior red team operator writing in-depth educational content for "Oh-My-Security", a daily cybersecurity education platform.
+    const objectivesAndMethodologyPrompt = `You are a senior red team operator writing in-depth educational content for "Oh-My-Security", a daily cybersecurity education platform.
 
 ${attackContext}
 
 ${sharedRules}
 
+Your response MUST contain EXACTLY two sections with these EXACT markers on their own lines:
+
+OBJECTIVES SECTION:
 Write a detailed, beginner-friendly explanation of attacker goals for ${attack.name} covering:
 - Primary strategic objectives explained simply — what do attackers actually want? (money, data, chaos, spying)
 - Secondary objectives and opportunistic goals — what else might they grab along the way?
 - Target selection criteria and victim profiling — how do attackers pick their victims? Explain the thought process.
 - What attackers achieved in the real-world news examples provided
 - Motivation analysis — explain each type (nation-state, criminal, hacktivist, insider) with a one-line description of who they are
+Minimum 350 words. Use sub-headings to organize.
 
-Minimum 350 words. Use sub-headings to organize. Do NOT include any section markers. Just write the content directly.`;
-
-    const methodologyPrompt = `You are a senior red team operator writing in-depth educational content for "Oh-My-Security", a daily cybersecurity education platform.
-
-${attackContext}
-
-${sharedRules}
-
+METHODOLOGY SECTION:
 Write a detailed multi-phase attack methodology for ${attack.name} that reads like a story — walk the reader through each step as if narrating a heist movie:
 - Phase 1: Reconnaissance and target profiling — explain OSINT, scanning, enumeration in plain terms
 - Phase 2: Weaponization and payload development — what the attacker builds and why
@@ -892,8 +889,9 @@ Write a detailed multi-phase attack methodology for ${attack.name} that reads li
 - Phase 8: Exfiltration and cleanup — getting the stolen goods out and covering tracks
 - Tools, frameworks, and TTPs used at each phase — name each tool and explain what it does in one sentence (reference MITRE ATT&CK where applicable, and explain what MITRE ATT&CK is on first mention)
 - Insights from how the attacks in the news articles were conducted
+Minimum 400 words. Use numbered phases with sub-headings for each.
 
-Minimum 400 words. Use numbered phases with sub-headings for each. Do NOT include any section markers. Just write the content directly.`;
+YOU MUST WRITE BOTH SECTIONS IN FULL. Do NOT stop after the objectives section.`;
 
     const exploitCodePrompt = `You are a senior red team operator writing educational exploit code examples for "Oh-My-Security", a daily cybersecurity education platform.
 
@@ -913,32 +911,26 @@ Include:
 - Detection signatures or indicators that defenders should watch for — explain each one
 - Mitigation code showing how to defend against each technique, with comments explaining the defense logic
 
-Do NOT use markdown formatting. Just write plain code with comments. Do NOT include any section markers.`;
+Do NOT use markdown formatting. Just write plain code with comments.`;
 
     try {
-      // Run all 3 sections in parallel for speed
-      console.log('🔄 [Red Team] Generating 3 sections in parallel...');
-      const [objectivesContent, methodologyContent, exploitContent] = await Promise.all([
-        this.generateContent(objectivesPrompt).catch(err => {
-          console.log('❌ Red Team objectives generation failed:', err instanceof Error ? err.message : 'Unknown');
-          return '';
-        }),
-        this.generateContent(methodologyPrompt).catch(err => {
-          console.log('❌ Red Team methodology generation failed:', err instanceof Error ? err.message : 'Unknown');
-          return '';
-        }),
-        this.generateContent(exploitCodePrompt).catch(err => {
-          console.log('❌ Red Team exploit code generation failed:', err instanceof Error ? err.message : 'Unknown');
-          return '';
-        }),
-      ]);
+      console.log('🔄 [Red Team] Generating objectives + methodology...');
+      const objMethodContent = await this.generateContent(objectivesAndMethodologyPrompt);
+      console.log('✅ [Red Team] Objectives + methodology done (' + objMethodContent.length + ' chars)');
 
-      console.log('✅ AI Red Team content generated — objectives:', objectivesContent.length, '| methodology:', methodologyContent.length, '| exploit:', exploitContent.length);
+      const objectivesSection = this.extractSection(objMethodContent, 'OBJECTIVES SECTION:', ['METHODOLOGY SECTION:']);
+      const methodologySection = this.extractSection(objMethodContent, 'METHODOLOGY SECTION:', []);
+
+      console.log('🔄 [Red Team] Generating exploit code...');
+      const exploitContent = await this.generateContent(exploitCodePrompt);
+      console.log('✅ [Red Team] Exploit code done (' + exploitContent.length + ' chars)');
+
+      console.log('✅ AI Red Team content generated — objectives:', objectivesSection.length, '| methodology:', methodologySection.length, '| exploit:', exploitContent.length);
 
       const fallback = this.getFallbackRedTeamContent(attack.name);
       return {
-        objectives: this.cleanAndFormatMarkdown(objectivesContent) || fallback.objectives,
-        methodology: this.cleanAndFormatMarkdown(methodologyContent) || fallback.methodology,
+        objectives: this.cleanAndFormatMarkdown(objectivesSection) || fallback.objectives,
+        methodology: this.cleanAndFormatMarkdown(methodologySection) || fallback.methodology,
         exploitCode: this.cleanExploitCode(exploitContent) || fallback.exploitCode,
       };
     } catch (error) {
@@ -967,62 +959,81 @@ Do NOT use markdown formatting. Just write plain code with comments. Do NOT incl
     }).join('\n\n');
   }
 
-  private async generateContent(prompt: string): Promise<string> {
-    try {
-      console.log('🔄 [AI] Calling OpenRouter API...');
-      console.log('🔑 [AI] API key present:', !!this.apiKey, '| Key prefix:', this.apiKey?.substring(0, 8) + '...');
+  private async generateContent(prompt: string, maxRetries = 2): Promise<string> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          const delay = attempt * 5000;
+          console.log(`🔄 [AI] Retry ${attempt}/${maxRetries} after ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
 
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://oh-my-security.vercel.app',
-          'X-Title': 'Oh-My-Security',
-        },
-        body: JSON.stringify({
-          model: 'openai/gpt-oss-120b:free',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a senior cybersecurity expert and gifted educator. Write in simple, clear language that a complete beginner can understand — but never sacrifice depth or accuracy. When you use a technical term, immediately explain it in plain English in parentheses, e.g. "SQL injection (a trick where attackers slip malicious database commands into a website\'s input fields)". Use analogies and real-world comparisons to make complex ideas click. Follow the formatting instructions in the user message EXACTLY. Always use the EXACT section markers specified. Your response must be comprehensive, detailed, and thorough — minimum 350 words per section. Aim for longer, richer explanations rather than shorter ones.',
-            },
-            {
-              role: 'user',
-              content: prompt,
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 8192,
-        })
-      });
+        console.log('🔄 [AI] Calling OpenRouter API...');
+        console.log('🔑 [AI] API key present:', !!this.apiKey, '| Key prefix:', this.apiKey?.substring(0, 8) + '...');
 
-      console.log('📡 [AI] Response status:', response.status, response.statusText);
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://oh-my-security.vercel.app',
+            'X-Title': 'Oh-My-Security',
+          },
+          body: JSON.stringify({
+            model: 'openai/gpt-oss-120b:free',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a senior cybersecurity expert and gifted educator. Write in simple, clear language that a complete beginner can understand — but never sacrifice depth or accuracy. When you use a technical term, immediately explain it in plain English in parentheses, e.g. "SQL injection (a trick where attackers slip malicious database commands into a website\'s input fields)". Use analogies and real-world comparisons to make complex ideas click. Follow the formatting instructions in the user message EXACTLY. Always use the EXACT section markers specified. Your response must be comprehensive, detailed, and thorough — minimum 350 words per section. Aim for longer, richer explanations rather than shorter ones.',
+              },
+              {
+                role: 'user',
+                content: prompt,
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 8192,
+          })
+        });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('❌ [AI] API error body:', errorBody.substring(0, 500));
-        throw new Error(`HTTP ${response.status}: ${errorBody}`);
+        console.log('📡 [AI] Response status:', response.status, response.statusText);
+
+        if (response.status === 429 && attempt < maxRetries) {
+          const errorBody = await response.text().catch(() => '');
+          console.log(`⚠️ [AI] Rate limited (429), will retry — ${errorBody.substring(0, 200)}`);
+          continue;
+        }
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          console.error('❌ [AI] API error body:', errorBody.substring(0, 500));
+          throw new Error(`HTTP ${response.status}: ${errorBody}`);
+        }
+
+        const data = await response.json();
+        const generatedText = data.choices?.[0]?.message?.content;
+        const finishReason = data.choices?.[0]?.finish_reason;
+        const usage = data.usage;
+
+        console.log('📊 [AI] Response stats — finish_reason:', finishReason, '| content length:', generatedText?.length || 0, '| tokens:', JSON.stringify(usage || {}));
+        console.log('📝 [AI] First 300 chars:', generatedText?.substring(0, 300) || 'EMPTY');
+
+        if (!generatedText) {
+          console.error('❌ [AI] Full response data:', JSON.stringify(data).substring(0, 1000));
+          throw new Error('AI generation failed: No response text from OpenRouter.');
+        }
+
+        return generatedText;
+      } catch (error) {
+        if (attempt < maxRetries && error instanceof Error && error.message.includes('429')) {
+          console.log(`⚠️ [AI] 429 in catch, will retry...`);
+          continue;
+        }
+        console.error('❌ [AI] generateContent error:', error instanceof Error ? error.message : 'Unknown error');
+        throw new Error(`OpenRouter API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
-
-      const data = await response.json();
-      const generatedText = data.choices?.[0]?.message?.content;
-      const finishReason = data.choices?.[0]?.finish_reason;
-      const usage = data.usage;
-
-      console.log('📊 [AI] Response stats — finish_reason:', finishReason, '| content length:', generatedText?.length || 0, '| tokens:', JSON.stringify(usage || {}));
-      console.log('📝 [AI] First 300 chars:', generatedText?.substring(0, 300) || 'EMPTY');
-
-      if (!generatedText) {
-        console.error('❌ [AI] Full response data:', JSON.stringify(data).substring(0, 1000));
-        throw new Error('AI generation failed: No response text from OpenRouter.');
-      }
-
-      return generatedText;
-    } catch (error) {
-      console.error('❌ [AI] generateContent error:', error instanceof Error ? error.message : 'Unknown error');
-      throw new Error(`OpenRouter API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+    throw new Error('OpenRouter API error: All retry attempts exhausted');
   }
 
   private extractSection(text: string, startMarker: string, endMarkers: string[]): string {
@@ -1314,12 +1325,13 @@ Do NOT use markdown formatting. Just write plain code with comments. Do NOT incl
 async function generateDailyContent() {
   const newsApiKey = process.env.NEWS_API_KEY;
   const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+  const searchApiKey = process.env.OPENROUTER_SEARCH_API_KEY || openrouterApiKey;
 
   if (!newsApiKey || !openrouterApiKey) {
     throw new Error('Missing required API keys: NEWS_API_KEY and OPENROUTER_API_KEY must be set');
   }
 
-  const newsService = new NewsAPIService(newsApiKey, openrouterApiKey);
+  const newsService = new NewsAPIService(newsApiKey, searchApiKey!);
   const aiService = new AIContentGenerator(openrouterApiKey);
 
   // Fetch recently used attacks from Supabase to avoid duplicates
@@ -1374,13 +1386,14 @@ async function generateDailyContent() {
     console.log(`📰 Top article: "${articles[0].title}" - ${articles[0].source.name}`);
   }
 
-  // Generate comprehensive content using AI (matching original approach)
-  mockSpinner.start('Generating comprehensive educational content with AI...');
-  const [blueTeamContent, redTeamContent] = await Promise.all([
-    aiService.generateBlueTeamContent(selectedAttack, articles),
-    aiService.generateRedTeamContent(selectedAttack, articles),
-  ]);
-  mockSpinner.succeed('Comprehensive AI content generation completed');
+  // Generate comprehensive content using AI — sequential to avoid 429 rate limits
+  mockSpinner.start('Generating blue team content with AI...');
+  const blueTeamContent = await aiService.generateBlueTeamContent(selectedAttack, articles);
+  mockSpinner.succeed('Blue team content generated');
+
+  mockSpinner.start('Generating red team content with AI...');
+  const redTeamContent = await aiService.generateRedTeamContent(selectedAttack, articles);
+  mockSpinner.succeed('Red team content generated');
 
   // Use Indian Standard Time (IST) for date generation
   // This ensures content is generated for the correct Indian date at 12:01 AM IST
