@@ -36,7 +36,7 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">2. News Gathering</h3>
               <p className="text-gray-600">
-                Using NewsAPI.org, we fetch the latest cybersecurity news with advanced relevance matching to ensure articles specifically match the selected attack topic.
+                Using NewsAPI.org and Trinity Mini AI, we run a 3-step pipeline: AI generates smart search queries for the topic, fetches candidate articles, then AI selects the most relevant ones — ensuring news truly matches the selected attack.
               </p>
             </div>
 
@@ -113,9 +113,9 @@ export default function AboutPage() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Strict Relevance</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">AI-Powered Relevance</h3>
                   <p className="text-gray-600">
-                    Advanced filtering ensures news articles specifically match the daily topic - no generic cybersecurity news that doesn't relate to the attack.
+                    Trinity Mini AI generates smart search queries and selects the most relevant news articles — no generic cybersecurity news that doesn't relate to the attack.
                   </p>
                 </div>
               </div>
@@ -152,7 +152,13 @@ export default function AboutPage() {
             <div className="text-center">
               <div className="text-orange-600 font-mono text-sm mb-2">News API</div>
               <div className="text-gray-900 font-semibold">NewsAPI.org</div>
-              <div className="text-gray-600 text-sm">Strict relevance matching</div>
+              <div className="text-gray-600 text-sm">AI-powered relevance matching</div>
+            </div>
+
+            <div className="text-center">
+              <div className="text-cyan-600 font-mono text-sm mb-2">AI News Search</div>
+              <div className="text-gray-900 font-semibold">OpenRouter AI</div>
+              <div className="text-gray-600 text-sm">Trinity Mini (Free)</div>
             </div>
 
             <div className="text-center">

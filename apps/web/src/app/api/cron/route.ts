@@ -435,12 +435,13 @@ async function callSearchAI(openrouterApiKey: string, systemPrompt: string, user
         ],
         temperature: 0.3,
         max_tokens: 2048,
-        reasoning: { effort: 'none' },
+        reasoning: { enabled: false },
       })
     });
 
     if (!response.ok) {
-      console.log(`⚠️ Search AI returned ${response.status}: ${response.statusText}`);
+      const errorBody = await response.text().catch(() => 'Unable to read error body');
+      console.log(`⚠️ Search AI returned ${response.status}: ${response.statusText} — ${errorBody}`);
       return null;
     }
 

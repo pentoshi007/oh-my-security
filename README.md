@@ -18,8 +18,9 @@ Our mission is to make cybersecurity knowledge accessible, current, and practica
 
 - **Automated Daily Content** – Vercel cron job runs daily at 12:01 AM IST, generating fresh content about a different attack methodology using OpenRouter AI (openai/gpt-oss-120b:free)
 - **Modern Next.js Frontend** – Responsive UI built with Next.js 15, Tailwind CSS, and DaisyUI, featuring distinct blue sections for defense and red sections for offense
-- **25+ Attack Methodologies** – Comprehensive database covering SQL injection, XSS, ransomware, phishing, and 20+ other attack types
-- **Strict News Relevance** – Powered by NewsAPI.org with advanced query matching to ensure articles specifically match the daily attack topic
+- **33+ Attack Methodologies** – Comprehensive database covering SQL injection, XSS, ransomware, phishing, zero-day exploits, supply chain attacks, and many more
+- **AI-Powered News Search** – Trinity Mini AI generates smart search queries and selects the most relevant articles from NewsAPI.org for each daily topic
+- **Beginner-Friendly Content** – AI-generated content uses simple, explanatory language so even beginners can understand every concept, while maintaining in-depth technical coverage
 - **Enhanced Archive System** – Real-time search, filtering by category, sorting options, and instant results for browsing all past content
 - **Supabase Database** – Lightning-fast content storage and retrieval with PostgreSQL, no git conflicts
 - **Email Subscriptions** – MongoDB-powered subscription system for daily updates and notifications
@@ -32,8 +33,11 @@ Our mission is to make cybersecurity knowledge accessible, current, and practica
 Oh-My-Security operates on a fully automated pipeline:
 
 1. **Daily Cron Job**: Vercel cron runs at 12:01 AM IST (6:31 PM UTC), triggering `/api/cron`
-2. **Attack Selection**: Intelligently selects next attack from 25+ methodologies, avoiding recently covered topics
-3. **News Gathering**: Fetches relevant cybersecurity articles from NewsAPI.org with advanced topic matching
+2. **Attack Selection**: Intelligently selects next attack from 33+ methodologies, avoiding recently covered topics
+3. **News Gathering**: AI-powered 3-step pipeline:
+   - **Query Generation**: Trinity Mini AI (`arcee-ai/trinity-mini:free`) generates smart search queries tailored to each attack topic
+   - **Article Fetching**: Queries NewsAPI.org to find relevant cybersecurity articles
+   - **Article Selection**: Trinity Mini AI evaluates and selects the most relevant articles from candidates
 4. **AI Content Generation**: OpenRouter AI generates comprehensive breakdown with:
    - Attack overview and real-world context
    - Blue Team defense strategies and detection methods
@@ -46,8 +50,10 @@ Oh-My-Security operates on a fully automated pipeline:
 flowchart TD
     A[Vercel Cron - 12:01 AM IST] --> B["API Cron Endpoint"]
     B --> C[Select Attack Methodology]
-    C --> D[Fetch News - NewsAPI.org]
-    D --> E[Generate Content - OpenRouter AI]
+    C --> D1["Trinity Mini AI → Generate Search Queries"]
+    D1 --> D2["NewsAPI.org → Fetch Articles"]
+    D2 --> D3["Trinity Mini AI → Select Relevant Articles"]
+    D3 --> E["GPT-OSS-120B → Generate Content"]
     E --> F[Store in Supabase]
     F --> G[Next.js App + Archive]
     G --> H[Users Access Content]
@@ -62,7 +68,8 @@ flowchart TD
 | **Frontend** | Next.js 15, React, Tailwind CSS, DaisyUI |
 | **Backend** | Next.js API Routes, TypeScript |
 | **AI Generation** | OpenRouter AI (openai/gpt-oss-120b:free) |
-| **News API** | NewsAPI.org with advanced relevance matching |
+| **AI News Search** | OpenRouter AI (arcee-ai/trinity-mini:free) |
+| **News API** | NewsAPI.org with AI-powered relevance matching |
 | **Database** | Supabase (PostgreSQL) for content storage |
 | **Subscriptions** | MongoDB Atlas for email management |
 | **Automation** | Vercel Cron Jobs (daily at 12:01 AM IST) |
@@ -76,19 +83,63 @@ flowchart TD
 ```
 /oh-my-security
 ├── apps/
-│   └── web/                         # Next.js application
+│   └── web/                                        # Next.js application
 │       ├── src/
 │       │   ├── app/
-│       │   │   ├── api/cron/        # Automated content generation
-│       │   │   ├── archive/         # Search & filter interface
-│       │   │   ├── about/           # About page
-│       │   │   └── page.tsx         # Home page
-│       │   ├── components/          # React components
-│       │   └── lib/                 # Utilities & database clients
-│       └── public/                  # Static assets
-├── vercel.json                      # Cron schedule configuration
-├── SUPABASE_SETUP.sql              # Database schema
-└── README.md                        # This file
+│       │   │   ├── api/
+│       │   │   │   ├── cron/route.ts               # Daily content generation + AI news pipeline
+│       │   │   │   ├── archive/route.ts            # Archive data API
+│       │   │   │   ├── content/[date]/route.ts     # Content by date API
+│       │   │   │   ├── subscribe/route.ts          # Email subscription API
+│       │   │   │   ├── revalidate/route.ts         # Cache revalidation
+│       │   │   │   └── clear-cache/route.ts        # Cache clearing
+│       │   │   ├── archive/
+│       │   │   │   ├── page.tsx                    # Archive page (server)
+│       │   │   │   └── ArchiveClient.tsx           # Archive client (search/filter)
+│       │   │   ├── day/[date]/page.tsx             # Individual day view
+│       │   │   ├── about/page.tsx                  # About page
+│       │   │   ├── page.tsx                        # Home page
+│       │   │   ├── layout.tsx                      # Root layout
+│       │   │   └── globals.css                     # Global styles
+│       │   ├── components/
+│       │   │   ├── ContentDisplay.tsx              # Main content renderer
+│       │   │   ├── ContentSection.tsx              # Blue/Red team section
+│       │   │   ├── ContentTabs.tsx                 # Defense/Offense tabs
+│       │   │   ├── Header.tsx                      # Navigation header
+│       │   │   ├── Footer.tsx                      # Site footer
+│       │   │   ├── SubscribeForm.tsx               # Email subscribe form
+│       │   │   └── ScrollAnimationWrapper.tsx      # Scroll animations
+│       │   ├── lib/
+│       │   │   ├── content.ts                      # Content fetching utilities
+│       │   │   ├── supabase.ts                     # Supabase client
+│       │   │   ├── mongodb.ts                      # MongoDB client
+│       │   │   └── generator/
+│       │   │       ├── ai.ts                       # OpenRouter AI content generation
+│       │   │       ├── attackDatabase.ts           # 33+ attack methodologies
+│       │   │       ├── historyTracker.ts           # Attack rotation tracking
+│       │   │       └── newsapi.ts                  # NewsAPI.org + Trinity Mini AI pipeline
+│       │   ├── models/
+│       │   │   └── Subscriber.ts                   # Email subscriber model
+│       │   └── types/
+│       │       └── content.ts                      # TypeScript type definitions
+│       ├── public/
+│       │   ├── favicon.svg                         # Site favicon
+│       │   ├── manifest.json                       # PWA manifest
+│       │   ├── robots.txt                          # Search engine directives
+│       │   └── generate-icons.html                 # Icon generation utility
+│       ├── package.json                            # Dependencies
+│       ├── next.config.mjs                         # Next.js configuration
+│       ├── tailwind.config.ts                      # Tailwind CSS config
+│       ├── tsconfig.json                           # TypeScript config
+│       ├── postcss.config.mjs                      # PostCSS config
+│       ├── vercel.json                             # Vercel app settings
+│       ├── next-env.d.ts                           # Next.js type declarations
+│       └── test-generator.js                       # AI generation test script
+├── package.json                                    # Root package config
+├── package-lock.json                               # Dependency lock file
+├── vercel.json                                     # Cron schedule configuration
+├── SUPABASE_SETUP.sql                              # Database schema setup
+└── README.md                                       # This file
 ```
 
 ---
@@ -177,15 +228,16 @@ flowchart TD
 
 ## 🎯 Key Features Explained
 
-### Strict News Relevance Matching
-Our NewsAPI.org integration uses advanced query matching to ensure articles are genuinely about the daily topic:
-- Uses boolean operators and quoted phrases for precise search queries
-- Multi-strategy search: exact name match, keyword combinations, category-based queries
-- Relevancy-sorted results with scoring for cybersecurity context
-- Excludes irrelevant articles when no specific content found
+### AI-Powered News Search
+Our 3-step AI pipeline ensures news articles are genuinely relevant to each day's attack topic:
+1. **Query Generation**: Trinity Mini AI (`arcee-ai/trinity-mini:free`) analyzes the attack topic and generates 4 optimized search queries
+2. **Article Fetching**: Queries are sent to NewsAPI.org to retrieve candidate articles
+3. **Article Selection**: Trinity Mini AI evaluates all candidates and selects the most relevant articles based on topic match and cybersecurity context
+- Automatic fallback to keyword-based search if AI is unavailable
+- Each step has resilient error handling to ensure content is always generated
 
 ### Intelligent Attack Selection
-- Rotates through 25+ attack methodologies
+- Rotates through 33+ attack methodologies
 - Tracks recently used attacks to ensure variety
 - Resets history after covering all topics
 - Categories: Web, Network, Social Engineering, Malware, Cloud, API, and more
@@ -211,16 +263,21 @@ Our NewsAPI.org integration uses advanced query matching to ensure articles are 
 
 ## 📊 Attack Coverage
 
-Current database includes 25+ attack methodologies across categories:
+Current database includes 33+ attack methodologies across categories:
 
-- **Web Attacks**: SQL Injection, XSS, CSRF, XXE, SSRF
-- **Network**: DDoS, DNS Poisoning, ARP Spoofing, SSL Stripping
-- **Malware**: Ransomware, Trojans, Rootkits, Keyloggers
-- **Social Engineering**: Phishing, Vishing, Pretexting
-- **Cloud**: S3 Misconfiguration, IAM Exploitation
-- **API**: Authentication Bypass, Rate Limit Abuse
-- **Authentication**: Credential Stuffing, Brute Force, Session Hijacking
-- **And many more...**
+- **Web Application Attacks**: SQL Injection, XSS, CSRF, XXE, SSRF, Command Injection
+- **Network Attacks**: DDoS, Man-in-the-Middle, DNS Poisoning, ARP Spoofing
+- **Malware**: Ransomware, Trojans, Rootkits, Keyloggers, Spyware
+- **Social Engineering**: Phishing, Social Engineering, Pretexting
+- **Authentication Attacks**: Brute Force, Session Hijacking, Password Spraying
+- **Advanced Attacks**: APT, Zero-Day Exploits, Supply Chain Attacks
+- **Data Attacks**: Data Breach, Data Exfiltration
+- **Wireless Attacks**: Evil Twin, Bluetooth Attacks
+- **Cryptocurrency Attacks**: Cryptojacking, Wallet Theft
+- **Access Control**: Privilege Escalation
+- **Configuration**: Security Misconfiguration
+- **IoT**: IoT Botnets
+- **Human Factor**: Insider Threats
 
 ---
 
