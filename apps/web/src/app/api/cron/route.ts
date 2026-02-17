@@ -434,7 +434,7 @@ async function callSearchAI(openrouterApiKey: string, systemPrompt: string, user
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.3,
-        max_tokens: 1024,
+        max_tokens: 2048,
       })
     });
 
@@ -512,28 +512,12 @@ class NewsAPIService {
   private async generateSearchQueries(attack: any): Promise<string[]> {
     console.log('🤖 Asking AI to generate search queries...');
 
-    const systemPrompt = `You are a cybersecurity news research assistant. Your job is to generate search queries that will find relevant news articles about a specific cyber attack type on NewsAPI.org.
+    const systemPrompt = `Generate 4 NewsAPI search queries for a cybersecurity attack topic. Use NewsAPI syntax: "exact phrases", AND/OR operators. Output ONLY JSON: {"queries": ["q1","q2","q3","q4"]}`;
 
-RULES:
-- Generate exactly 4 search queries optimized for the NewsAPI "everything" endpoint
-- Use NewsAPI query syntax: double quotes for exact phrases, AND/OR/NOT boolean operators, parentheses for grouping
-- Think about how JOURNALISTS write about this topic — use terms that appear in real news headlines and descriptions
-- Include variations: the attack name itself, common aliases, related threat actor names, recent CVEs or campaigns if applicable
-- Each query should take a different angle to maximize coverage
-- Keep queries focused — overly broad queries return irrelevant results
+    const userPrompt = `Attack: ${attack.name} (${attack.category})
+Keywords: ${attack.searchKeywords.join(', ')}${attack.aliases ? ` | Aliases: ${attack.aliases.join(', ')}` : ''}
 
-Respond with ONLY a JSON object in this format:
-{"queries": ["query1", "query2", "query3", "query4"]}`;
-
-    const userPrompt = `Generate 4 NewsAPI search queries for this cybersecurity attack:
-
-Attack Name: ${attack.name}
-Category: ${attack.category}
-Description: ${attack.description}
-Known Keywords: ${attack.searchKeywords.join(', ')}
-${attack.aliases ? `Aliases: ${attack.aliases.join(', ')}` : ''}
-
-Remember: Think about how news journalists write about "${attack.name}" attacks — what words appear in real headlines?`;
+Generate 4 varied queries using terms journalists would use in headlines about "${attack.name}". Output ONLY the JSON.`;
 
     const aiResponse = await callSearchAI(this.openrouterApiKey, systemPrompt, userPrompt);
 
