@@ -413,9 +413,72 @@ const createMockSpinner = (operation: string) => ({
 
 const mockSpinner = createMockSpinner('CRON');
 
-// News service using NewsAPI.org — better coverage for cybersecurity topics
+// AI-powered news search helper — uses a fast, free model to generate smart search queries
+// and select the most relevant articles for the daily attack topic
+const SEARCH_AI_MODEL = 'arcee-ai/trinity-mini:free';
+
+async function callSearchAI(openrouterApiKey: string, systemPrompt: string, userPrompt: string): Promise<string | null> {
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openrouterApiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://oh-my-security.vercel.app',
+        'X-Title': 'Oh-My-Security News Search'
+      },
+      body: JSON.stringify({
+        model: SEARCH_AI_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 1024,
+      })
+    });
+
+    if (!response.ok) {
+      console.log(`⚠️ Search AI returned ${response.status}: ${response.statusText}`);
+      return null;
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (!content) {
+      console.log('⚠️ Search AI returned empty content');
+      return null;
+    }
+    return content;
+  } catch (error) {
+    console.log('⚠️ Search AI call failed:', error instanceof Error ? error.message : 'Unknown error');
+    return null;
+  }
+}
+
+// Extract JSON from AI response — handles markdown code fences and raw JSON
+function extractJSON(text: string): any | null {
+  try {
+    // Try raw parse first
+    return JSON.parse(text);
+  } catch {
+    // Try extracting from code fence
+    const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) {
+      try { return JSON.parse(fenceMatch[1].trim()); } catch { /* fall through */ }
+    }
+    // Try finding JSON object/array in the text
+    const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if (jsonMatch) {
+      try { return JSON.parse(jsonMatch[1]); } catch { /* fall through */ }
+    }
+    return null;
+  }
+}
+
+// News service using NewsAPI.org with AI-powered search term generation and article selection
 class NewsAPIService {
-  constructor(private apiKey: string) { }
+  constructor(private apiKey: string, private openrouterApiKey: string) { }
 
   async fetchCybersecurityNews() {
     const response = await fetch(
@@ -441,281 +504,261 @@ class NewsAPIService {
     return [];
   }
 
+  /**
+   * Step 1: Ask AI to generate smart search queries for NewsAPI based on the attack topic.
+   * The AI understands how journalists write about these topics and generates queries
+   * that match real-world article language — not just technical jargon.
+   */
+  private async generateSearchQueries(attack: any): Promise<string[]> {
+    console.log('🤖 Asking AI to generate search queries...');
+
+    const systemPrompt = `You are a cybersecurity news research assistant. Your job is to generate search queries that will find relevant news articles about a specific cyber attack type on NewsAPI.org.
+
+RULES:
+- Generate exactly 4 search queries optimized for the NewsAPI "everything" endpoint
+- Use NewsAPI query syntax: double quotes for exact phrases, AND/OR/NOT boolean operators, parentheses for grouping
+- Think about how JOURNALISTS write about this topic — use terms that appear in real news headlines and descriptions
+- Include variations: the attack name itself, common aliases, related threat actor names, recent CVEs or campaigns if applicable
+- Each query should take a different angle to maximize coverage
+- Keep queries focused — overly broad queries return irrelevant results
+
+Respond with ONLY a JSON object in this format:
+{"queries": ["query1", "query2", "query3", "query4"]}`;
+
+    const userPrompt = `Generate 4 NewsAPI search queries for this cybersecurity attack:
+
+Attack Name: ${attack.name}
+Category: ${attack.category}
+Description: ${attack.description}
+Known Keywords: ${attack.searchKeywords.join(', ')}
+${attack.aliases ? `Aliases: ${attack.aliases.join(', ')}` : ''}
+
+Remember: Think about how news journalists write about "${attack.name}" attacks — what words appear in real headlines?`;
+
+    const aiResponse = await callSearchAI(this.openrouterApiKey, systemPrompt, userPrompt);
+
+    if (aiResponse) {
+      const parsed = extractJSON(aiResponse);
+      if (parsed?.queries && Array.isArray(parsed.queries) && parsed.queries.length > 0) {
+        const queries = parsed.queries.filter((q: any) => typeof q === 'string' && q.trim().length > 0).slice(0, 5);
+        if (queries.length > 0) {
+          console.log(`✅ AI generated ${queries.length} search queries`);
+          queries.forEach((q: string, i: number) => console.log(`  Query ${i + 1}: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`));
+          return queries;
+        }
+      }
+      console.log('⚠️ AI response did not contain valid queries, using fallback');
+    }
+
+    // Fallback: hardcoded strategies if AI fails
+    return this.getFallbackQueries(attack);
+  }
+
+  /**
+   * Fallback search queries when AI is unavailable
+   */
+  private getFallbackQueries(attack: any): string[] {
+    console.log('📋 Using fallback search queries');
+    return [
+      `"${attack.name}" AND (cybersecurity OR "cyber attack" OR hacking OR security)`,
+      `(${attack.searchKeywords.slice(0, 3).map((k: string) => `"${k}"`).join(' OR ')}) AND (cybersecurity OR security OR hacking)`,
+      `${attack.name} AND ${attack.category.toLowerCase()} AND (cyber OR security OR attack)`,
+    ];
+  }
+
+  /**
+   * Step 2: Fetch articles from NewsAPI using the AI-generated (or fallback) queries
+   */
+  private async fetchArticlesFromAPI(queries: string[]): Promise<any[]> {
+    let allArticles: any[] = [];
+    const seenUrls = new Set<string>();
+    const fromDate = this.getDateDaysAgo(29);
+
+    for (let i = 0; i < queries.length; i++) {
+      const query = queries[i];
+      try {
+        console.log(`  Fetching query ${i + 1}/${queries.length}: ${query.substring(0, 80)}...`);
+
+        const response = await fetch(
+          `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=relevancy&pageSize=20&from=${fromDate}&apiKey=${this.apiKey}`
+        );
+        const data = await response.json();
+
+        if (data.status === 'ok' && data.articles) {
+          console.log(`  → ${data.articles.length} results`);
+          data.articles.forEach((article: any) => {
+            if (article.url && !seenUrls.has(article.url) &&
+                article.title && article.description &&
+                article.title !== '[Removed]' &&
+                article.description !== '[Removed]') {
+              allArticles.push({
+                url: article.url,
+                title: article.title,
+                description: article.description,
+                content: article.content || '',
+                publishedAt: article.publishedAt,
+                source: { name: article.source?.name || 'Unknown' }
+              });
+              seenUrls.add(article.url);
+            }
+          });
+        } else {
+          console.log(`  → Query ${i + 1} error: ${data.status} ${data.message || ''}`);
+        }
+      } catch (err) {
+        console.log(`  → Query ${i + 1} failed:`, err instanceof Error ? err.message : err);
+      }
+
+      // Stop early if we have plenty of candidates
+      if (allArticles.length >= 30) break;
+
+      // Small delay between API calls
+      if (i < queries.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
+    }
+
+    return allArticles;
+  }
+
+  /**
+   * Step 3: Ask AI to select the most relevant articles from the candidates.
+   * The AI reads each article's title + description and picks the ones that
+   * genuinely match the attack topic — understanding context, not just keywords.
+   */
+  private async selectRelevantArticles(attack: any, candidates: any[]): Promise<any[]> {
+    if (candidates.length === 0) return [];
+
+    // If very few candidates, skip AI selection — they're all we have
+    if (candidates.length <= 3) {
+      console.log(`📰 Only ${candidates.length} candidates — skipping AI selection`);
+      return candidates;
+    }
+
+    console.log(`🤖 Asking AI to select best articles from ${candidates.length} candidates...`);
+
+    // Build a compact article list for the AI to evaluate
+    const articleList = candidates.slice(0, 30).map((a, i) =>
+      `[${i}] "${a.title}" — ${a.source.name} (${new Date(a.publishedAt).toLocaleDateString()})\n    ${(a.description || '').substring(0, 200)}`
+    ).join('\n\n');
+
+    const systemPrompt = `You are a cybersecurity news curator. Your job is to select the most relevant news articles for a specific cyber attack topic.
+
+SELECTION CRITERIA (in order of importance):
+1. RELEVANCE: Article must be specifically about the attack type, not just mentioning security in passing
+2. SPECIFICITY: Prefer articles about real incidents, campaigns, or vulnerabilities over generic advice
+3. RECENCY: Prefer newer articles over older ones
+4. QUALITY: Prefer reputable cybersecurity sources (The Hacker News, BleepingComputer, Dark Reading, etc.)
+5. DIVERSITY: Pick articles covering different aspects (incident reports, technical analysis, defense guides)
+
+REJECT articles that:
+- Are about a different type of attack entirely
+- Only mention the attack type in passing while being about something else
+- Are about non-cyber topics (legal, medical, border security, social security, etc.)
+- Are duplicate coverage of the same incident
+
+Respond with ONLY a JSON object:
+{"selected": [0, 3, 7], "reasoning": "brief explanation of why these were chosen"}
+
+Select 3-5 of the BEST articles. If fewer than 3 are genuinely relevant, select only those.
+If NONE are relevant, respond: {"selected": [], "reasoning": "none match"}`;
+
+    const userPrompt = `Select the most relevant articles about "${attack.name}" (${attack.category}).
+
+Attack description: ${attack.description}
+
+CANDIDATE ARTICLES:
+${articleList}`;
+
+    const aiResponse = await callSearchAI(this.openrouterApiKey, systemPrompt, userPrompt);
+
+    if (aiResponse) {
+      const parsed = extractJSON(aiResponse);
+      if (parsed?.selected && Array.isArray(parsed.selected)) {
+        const validIndices = parsed.selected
+          .filter((idx: any) => typeof idx === 'number' && idx >= 0 && idx < candidates.length);
+
+        if (validIndices.length > 0) {
+          const selected = validIndices.slice(0, 5).map((idx: number) => candidates[idx]);
+          console.log(`✅ AI selected ${selected.length} relevant articles${parsed.reasoning ? `: ${parsed.reasoning.substring(0, 100)}` : ''}`);
+          selected.forEach((a: any) => console.log(`  ✓ "${a.title.substring(0, 80)}..." — ${a.source.name}`));
+          return selected;
+        }
+
+        if (parsed.selected.length === 0) {
+          console.log(`⚠️ AI found no relevant articles: ${parsed.reasoning || 'no reason given'}`);
+          return [];
+        }
+      }
+      console.log('⚠️ AI selection response was malformed, using basic fallback ranking');
+    }
+
+    // Fallback: basic keyword-based selection if AI fails
+    return this.fallbackArticleSelection(attack, candidates);
+  }
+
+  /**
+   * Fallback selection when AI is unavailable — simple keyword matching
+   */
+  private fallbackArticleSelection(attack: any, candidates: any[]): any[] {
+    console.log('📋 Using fallback keyword selection');
+    const attackNameLower = attack.name.toLowerCase();
+    const keywordsLower = attack.searchKeywords.map((k: string) => k.toLowerCase());
+
+    const scored = candidates.map(article => {
+      const text = `${article.title} ${article.description}`.toLowerCase();
+      let score = 0;
+      if (text.includes(attackNameLower)) score += 50;
+      keywordsLower.forEach((kw: string) => { if (text.includes(kw)) score += 10; });
+      // Boost recent articles
+      const days = (Date.now() - new Date(article.publishedAt).getTime()) / (1000 * 60 * 60 * 24);
+      if (days < 7) score += 15;
+      else if (days < 14) score += 10;
+      return { article, score };
+    });
+
+    return scored
+      .filter(s => s.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(s => s.article);
+  }
+
+  /**
+   * Main method: AI-driven news search pipeline
+   * 1. AI generates search queries → 2. Fetch from NewsAPI → 3. AI selects best articles
+   */
   async fetchNewsForAttack(attack: any) {
     try {
-      console.log(`🔍 Searching news for: ${attack.name}`);
+      console.log(`🔍 AI-powered news search for: ${attack.name}`);
 
-      // NewsAPI.org supports advanced query syntax with AND/OR, quotes, and parentheses
-      const searchStrategies = [
-        // Strategy 1: Exact attack name with cybersecurity context
-        `"${attack.name}" AND (cybersecurity OR "cyber attack" OR hacking OR security)`,
-        // Strategy 2: Primary search keywords combined
-        `(${attack.searchKeywords.slice(0, 3).map((k: string) => `"${k}"`).join(' OR ')}) AND (cybersecurity OR security OR hacking)`,
-        // Strategy 3: Attack name with category — broader match
-        `${attack.name} AND ${attack.category.toLowerCase()} AND (cyber OR security OR attack)`,
-      ];
+      // Step 1: Generate search queries (AI or fallback)
+      const queries = await this.generateSearchQueries(attack);
 
-      let allArticles: any[] = [];
-      const seenUrls = new Set<string>();
+      // Step 2: Fetch candidate articles from NewsAPI
+      console.log('📡 Fetching articles from NewsAPI...');
+      const candidates = await this.fetchArticlesFromAPI(queries);
+      console.log(`📊 Total unique candidate articles: ${candidates.length}`);
 
-      // NewsAPI free tier: up to 100 requests/day, so we can afford multiple strategies
-      for (let i = 0; i < searchStrategies.length; i++) {
-        const query = searchStrategies[i];
-        try {
-          console.log(`  Strategy ${i + 1}: ${query.substring(0, 100)}...`);
-
-          // Search last 30 days (NewsAPI free tier limit)
-          const fromDate = this.getDateDaysAgo(29);
-
-          const response = await fetch(
-            `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=relevancy&pageSize=20&from=${fromDate}&apiKey=${this.apiKey}`
-          );
-          const data = await response.json();
-
-          if (data.status === 'ok' && data.articles) {
-            console.log(`  Found ${data.articles.length} articles`);
-            data.articles.forEach((article: any) => {
-              if (article.url && !seenUrls.has(article.url) &&
-                  article.title && article.description &&
-                  article.title !== '[Removed]' &&
-                  article.description !== '[Removed]') {
-                const normalizedArticle = {
-                  url: article.url,
-                  title: article.title,
-                  description: article.description,
-                  content: article.content || '',
-                  publishedAt: article.publishedAt,
-                  source: {
-                    name: article.source?.name || 'Unknown'
-                  }
-                };
-                allArticles.push(normalizedArticle);
-                seenUrls.add(article.url);
-              }
-            });
-          } else {
-            console.log(`  Strategy ${i + 1} returned no results or error:`, data.status, data.message || '');
-          }
-        } catch (strategyError) {
-          console.log(`  Strategy ${i + 1} failed:`, strategyError);
-          continue;
-        }
-
-        // If we have enough candidate articles, stop trying more strategies
-        if (allArticles.length >= 20) {
-          break;
-        }
-
-        // Small delay between API calls to be polite
-        await new Promise(resolve => setTimeout(resolve, 500));
+      if (candidates.length === 0) {
+        console.log(`⚠️ No articles found for ${attack.name}`);
+        return [];
       }
 
-      console.log(`📊 Total candidate articles: ${allArticles.length}`);
+      // Step 3: AI selects the most relevant articles (or fallback)
+      const selectedArticles = await this.selectRelevantArticles(attack, candidates);
 
-      // Score and filter articles for relevance
-      const scoredArticles = allArticles
-        .map(article => {
-          const score = this.scoreArticleRelevance(article, attack);
-          return { article, score, title: article.title };
-        })
-        .filter(item => {
-          if (item.score > 0) {
-            console.log(`  ✓ Matched (score ${item.score}): ${item.title.substring(0, 80)}...`);
-            return true;
-          }
-          return false;
-        })
-        .sort((a, b) => b.score - a.score);
-
-      console.log(`✅ Final relevant articles: ${scoredArticles.length}`);
-
-      // Return top 5 most relevant articles
-      const topArticles = scoredArticles.slice(0, 5).map(item => item.article);
-
-      if (topArticles.length === 0) {
-        console.log(`⚠️ No relevant articles found for ${attack.name}`);
+      if (selectedArticles.length === 0) {
+        console.log(`⚠️ No relevant articles selected for ${attack.name}`);
+      } else {
+        console.log(`✅ Final: ${selectedArticles.length} relevant articles for ${attack.name}`);
       }
 
-      return topArticles;
+      return selectedArticles;
     } catch (error) {
       console.error('Failed to fetch news:', error);
       return [];
     }
-  }
-
-  /**
-   * Score article relevance to the attack methodology
-   * Article MUST contain attack name/keywords in title OR description AND have cybersecurity context
-   */
-  private scoreArticleRelevance(article: any, attack: any): number {
-    const titleLower = article.title.toLowerCase();
-    const descLower = (article.description || '').toLowerCase();
-    const titleAndDesc = `${titleLower} ${descLower}`;
-
-    // CRITICAL: Attack topic MUST be mentioned in title or description
-    const hasAttackInTitleOrDesc = this.hasExactAttackMatch(titleAndDesc, attack);
-
-    if (!hasAttackInTitleOrDesc) {
-      return 0;
-    }
-
-    // MANDATORY: Must have cybersecurity context
-    const hasStrongCybersecurityContext = this.hasStrongCybersecurityContext(titleAndDesc);
-
-    if (!hasStrongCybersecurityContext) {
-      return 0;
-    }
-
-    // Both requirements met — calculate detailed relevance score
-    let score = 100;
-
-    // PRIORITY 1: Attack name in TITLE gets highest boost
-    if (titleLower.includes(attack.name.toLowerCase())) {
-      score += 50;
-    }
-
-    // PRIORITY 2: Check for aliases in title
-    if (attack.aliases) {
-      attack.aliases.forEach((alias: string) => {
-        if (titleLower.includes(alias.toLowerCase())) {
-          score += 40;
-        }
-      });
-    }
-
-    // PRIORITY 3: Primary search keywords in title
-    attack.searchKeywords.slice(0, 3).forEach((keyword: string, index: number) => {
-      const keywordLower = keyword.toLowerCase();
-      const titleWeight = 30 - (index * 5);
-      const descWeight = 15 - (index * 3);
-
-      if (titleLower.includes(keywordLower)) {
-        score += titleWeight;
-      } else if (descLower.includes(keywordLower)) {
-        score += descWeight;
-      }
-    });
-
-    // PRIORITY 4: Attack name in description (if not in title)
-    if (!titleLower.includes(attack.name.toLowerCase()) && descLower.includes(attack.name.toLowerCase())) {
-      score += 25;
-    }
-
-    // PRIORITY 5: Boost for recent articles
-    const articleDate = new Date(article.publishedAt);
-    const daysSincePublished = (Date.now() - articleDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSincePublished < 7) score += 20;
-    else if (daysSincePublished < 14) score += 15;
-    else if (daysSincePublished < 21) score += 10;
-    else if (daysSincePublished < 30) score += 5;
-
-    // PRIORITY 6: Reputable cybersecurity sources
-    const cybersecuritySources = [
-      'reuters', 'bbc', 'cnn', 'techcrunch', 'wired', 'ars technica', 'zdnet',
-      'bleeping computer', 'the hacker news', 'krebs on security', 'dark reading',
-      'security week', 'threat post', 'infosecurity magazine', 'cyber security news',
-      'cso online', 'security boulevard', 'help net security', 'it security guru',
-      'security affairs', 'hackread', 'cybersecurity insiders'
-    ];
-    if (cybersecuritySources.some(source =>
-      article.source.name.toLowerCase().includes(source)
-    )) {
-      score += 15;
-    }
-
-    return score;
-  }
-
-  /**
-   * Check if article mentions the specific attack name, aliases, or primary keywords
-   */
-  private hasExactAttackMatch(text: string, attack: any): boolean {
-    const textLower = text.toLowerCase();
-
-    const containsPhrase = (haystack: string, needle: string): boolean => {
-      if (needle.includes(' ')) {
-        return haystack.includes(needle);
-      }
-      const regex = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-      return regex.test(haystack);
-    };
-
-    // Check for attack name
-    if (containsPhrase(textLower, attack.name.toLowerCase())) {
-      return true;
-    }
-
-    // Check for aliases
-    if (attack.aliases && attack.aliases.length > 0) {
-      for (const alias of attack.aliases) {
-        if (containsPhrase(textLower, alias.toLowerCase())) {
-          return true;
-        }
-      }
-    }
-
-    // Check for primary search keywords (at least 2 must match)
-    const keywordMatches = attack.searchKeywords.slice(0, 4).filter((keyword: string) =>
-      containsPhrase(textLower, keyword.toLowerCase())
-    ).length;
-
-    if (keywordMatches >= 2) {
-      return true;
-    }
-
-    return false;
-  }
-  
-  /**
-   * Check if article has strong cybersecurity context
-   */
-  private hasStrongCybersecurityContext(text: string): boolean {
-    const textLower = text.toLowerCase();
-
-    const primaryTerms = [
-      'cybersecurity', 'cyber security', 'cyber attack', 'cyber threat',
-      'security breach', 'data breach', 'security incident',
-      'hacking', 'hacker', 'hacked',
-      'malware', 'ransomware', 'trojan',
-      'vulnerability', 'exploit',
-      'threat actor', 'security researcher',
-      'cybercrime', 'cyberattack'
-    ];
-
-    const secondaryTerms = [
-      'security', 'attack', 'breach', 'threat', 'vulnerability',
-      'compromise', 'intrusion', 'penetration',
-      'patch', 'zero-day', 'backdoor',
-      'phishing', 'credential', 'authentication',
-      'encryption', 'firewall', 'antivirus'
-    ];
-
-    // Exclude non-cybersecurity contexts
-    const excludeContexts = [
-      'attorney-client privilege', 'legal privilege', 'court case', 'lawsuit',
-      'litigation', 'court ruling', 'legal precedent', 'judge ruled',
-      'medical', 'healthcare', 'hospital', 'patient privacy', 'hipaa',
-      'border security', 'national security advisor', 'homeland security',
-      'social security', 'job security', 'food security',
-      'securities and exchange', 'financial security'
-    ];
-
-    for (const excludeContext of excludeContexts) {
-      if (textLower.includes(excludeContext)) {
-        const hasCyberTerm = primaryTerms.some(term => textLower.includes(term));
-        if (!hasCyberTerm) {
-          return false;
-        }
-      }
-    }
-
-    const primaryMatches = primaryTerms.filter(term => textLower.includes(term)).length;
-    if (primaryMatches >= 1) {
-      return true;
-    }
-
-    const secondaryMatches = secondaryTerms.filter(term => textLower.includes(term)).length;
-    return secondaryMatches >= 3;
   }
 
   private getDateDaysAgo(days: number): string {
@@ -1258,7 +1301,7 @@ async function generateDailyContent() {
     throw new Error('Missing required API keys: NEWS_API_KEY and OPENROUTER_API_KEY must be set');
   }
 
-  const newsService = new NewsAPIService(newsApiKey);
+  const newsService = new NewsAPIService(newsApiKey, openrouterApiKey);
   const aiService = new AIContentGenerator(openrouterApiKey);
 
   // Fetch recently used attacks from Supabase to avoid duplicates
