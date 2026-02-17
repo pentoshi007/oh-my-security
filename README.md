@@ -16,7 +16,7 @@ Our mission is to make cybersecurity knowledge accessible, current, and practica
 
 ## ✨ Features
 
-- **Automated Daily Content** – Vercel cron job runs daily at 12:01 AM IST, generating fresh content about a different attack methodology using OpenRouter AI (z-ai/glm-4.5-air:free)
+- **Automated Daily Content** – Vercel cron job runs daily at 12:01 AM IST, generating fresh content about a different attack methodology using OpenRouter AI (openai/gpt-oss-120b:free)
 - **Modern Next.js Frontend** – Responsive UI built with Next.js 15, Tailwind CSS, and DaisyUI, featuring distinct blue sections for defense and red sections for offense
 - **25+ Attack Methodologies** – Comprehensive database covering SQL injection, XSS, ransomware, phishing, and 20+ other attack types
 - **Strict News Relevance** – Powered by newsdata.io with ultra-strict matching to ensure articles specifically match the daily attack topic
@@ -61,7 +61,7 @@ flowchart TD
 |:------|:-----------|
 | **Frontend** | Next.js 15, React, Tailwind CSS, DaisyUI |
 | **Backend** | Next.js API Routes, TypeScript |
-| **AI Generation** | OpenRouter AI (z-ai/glm-4.5-air:free) |
+| **AI Generation** | OpenRouter AI (openai/gpt-oss-120b:free) |
 | **News API** | newsdata.io with strict relevance matching |
 | **Database** | Supabase (PostgreSQL) for content storage |
 | **Subscriptions** | MongoDB Atlas for email management |

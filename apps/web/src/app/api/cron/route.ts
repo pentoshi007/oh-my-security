@@ -751,7 +751,7 @@ class NewsDataService {
   }
 }
 
-// AI Content Generator using OpenRouter (z-ai/glm-4.5-air:free)
+// AI Content Generator using OpenRouter (openai/gpt-oss-120b:free)
 class AIContentGenerator {
   constructor(private apiKey: string) { }
 
@@ -929,7 +929,7 @@ Provide educational, well-commented code examples that demonstrate the attack te
           'X-Title': 'Oh-My-Security',
         },
         body: JSON.stringify({
-          model: 'z-ai/glm-4.5-air:free',
+          model: 'openai/gpt-oss-120b:free',
           messages: [
             {
               role: 'system',
@@ -941,7 +941,6 @@ Provide educational, well-commented code examples that demonstrate the attack te
             }
           ],
           temperature: 0.7,
-          top_p: 0.9,
           max_tokens: 8192,
         })
       });

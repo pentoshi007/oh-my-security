@@ -28,7 +28,7 @@ export interface NewsAPIArticle {
 
 export class AIContentGenerator {
     private apiKey: string;
-    private model = 'z-ai/glm-4.5-air:free';
+    private model = 'openai/gpt-oss-120b:free';
 
     constructor(apiKey: string) {
         this.apiKey = apiKey;
@@ -219,7 +219,6 @@ Provide educational, well-commented code examples that demonstrate the attack te
                         }
                     ],
                     temperature: 0.7,
-                    top_p: 0.9,
                     max_tokens: 8192,
                 })
             });
