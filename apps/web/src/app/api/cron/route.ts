@@ -917,6 +917,9 @@ Provide educational, well-commented code examples that demonstrate the attack te
 
   private async generateContent(prompt: string): Promise<string> {
     try {
+      console.log('🔄 [AI] Calling OpenRouter API...');
+      console.log('🔑 [AI] API key present:', !!this.apiKey, '| Key prefix:', this.apiKey?.substring(0, 8) + '...');
+
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -929,6 +932,10 @@ Provide educational, well-commented code examples that demonstrate the attack te
           model: 'z-ai/glm-4.5-air:free',
           messages: [
             {
+              role: 'system',
+              content: 'You are a senior cybersecurity expert. Follow the formatting instructions in the user message EXACTLY. Always use the EXACT section markers specified. Your response must be comprehensive and detailed — minimum 300 words per section.',
+            },
+            {
               role: 'user',
               content: prompt,
             }
@@ -939,28 +946,38 @@ Provide educational, well-commented code examples that demonstrate the attack te
         })
       });
 
+      console.log('📡 [AI] Response status:', response.status, response.statusText);
+
       if (!response.ok) {
         const errorBody = await response.text();
+        console.error('❌ [AI] API error body:', errorBody.substring(0, 500));
         throw new Error(`HTTP ${response.status}: ${errorBody}`);
       }
 
       const data = await response.json();
       const generatedText = data.choices?.[0]?.message?.content;
+      const finishReason = data.choices?.[0]?.finish_reason;
+      const usage = data.usage;
+
+      console.log('📊 [AI] Response stats — finish_reason:', finishReason, '| content length:', generatedText?.length || 0, '| tokens:', JSON.stringify(usage || {}));
+      console.log('📝 [AI] First 300 chars:', generatedText?.substring(0, 300) || 'EMPTY');
 
       if (!generatedText) {
+        console.error('❌ [AI] Full response data:', JSON.stringify(data).substring(0, 1000));
         throw new Error('AI generation failed: No response text from OpenRouter.');
       }
 
       return generatedText;
     } catch (error) {
+      console.error('❌ [AI] generateContent error:', error instanceof Error ? error.message : 'Unknown error');
       throw new Error(`OpenRouter API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  private parseBlueTeamContent(content: string, attackType: string) {
-    const extractSection = (text: string, startMarker: string, endMarkers: string[]): string => {
-      const startIndex = text.toLowerCase().indexOf(startMarker.toLowerCase());
-      if (startIndex === -1) return '';
+  private extractSection(text: string, startMarker: string, endMarkers: string[]): string {
+    // Strategy 1: Exact marker match (case-insensitive)
+    const startIndex = text.toLowerCase().indexOf(startMarker.toLowerCase());
+    if (startIndex !== -1) {
       let endIndex = text.length;
       for (const marker of endMarkers) {
         const markerIndex = text.toLowerCase().indexOf(marker.toLowerCase(), startIndex + startMarker.length);
@@ -969,42 +986,187 @@ Provide educational, well-commented code examples that demonstrate the attack te
         }
       }
       return text.substring(startIndex + startMarker.length, endIndex).trim();
-    };
+    }
 
-    const aboutSection = extractSection(content, 'ABOUT SECTION:', ['HOW IT WORKS SECTION:']);
-    const howItWorksSection = extractSection(content, 'HOW IT WORKS SECTION:', ['IMPACT SECTION:']);
-    const impactSection = extractSection(content, 'IMPACT SECTION:', []);
+    // Strategy 2: Flexible marker — look for the keyword without "SECTION:" suffix
+    // e.g., "ABOUT SECTION:" → try "ABOUT:", "About:", "## About", "# About"
+    const keyword = startMarker.replace(/\s*SECTION:\s*$/i, '').trim();
+    const flexPatterns = [
+      new RegExp(`^\\s*${keyword}\\s*:\\s*$`, 'im'),
+      new RegExp(`^\\s*#+\\s*${keyword}`, 'im'),
+      new RegExp(`^\\s*\\*\\*${keyword}\\*\\*`, 'im'),
+    ];
 
-    return {
+    for (const pattern of flexPatterns) {
+      const match = text.match(pattern);
+      if (match && match.index !== undefined) {
+        const sectionStart = match.index + match[0].length;
+        let endIndex = text.length;
+
+        // Look for end markers with same flexible matching
+        for (const endMarker of endMarkers) {
+          const endKeyword = endMarker.replace(/\s*SECTION:\s*$/i, '').trim();
+          const endPatterns = [
+            new RegExp(`^\\s*${endKeyword}\\s*SECTION:\\s*$`, 'im'),
+            new RegExp(`^\\s*${endKeyword}\\s*:\\s*$`, 'im'),
+            new RegExp(`^\\s*#+\\s*${endKeyword}`, 'im'),
+            new RegExp(`^\\s*\\*\\*${endKeyword}\\*\\*`, 'im'),
+          ];
+          for (const ep of endPatterns) {
+            const endMatch = text.substring(sectionStart).match(ep);
+            if (endMatch && endMatch.index !== undefined) {
+              const candidateEnd = sectionStart + endMatch.index;
+              if (candidateEnd < endIndex) {
+                endIndex = candidateEnd;
+              }
+            }
+          }
+        }
+
+        const result = text.substring(sectionStart, endIndex).trim();
+        if (result.length > 0) return result;
+      }
+    }
+
+    return '';
+  }
+
+  private parseBlueTeamContent(content: string, attackType: string) {
+    console.log('🔍 [Parse] Parsing Blue Team content — total length:', content.length);
+
+    // Check which markers exist in the content
+    const hasAbout = /about\s*section\s*:/i.test(content);
+    const hasHowItWorks = /how\s*it\s*works\s*section\s*:/i.test(content);
+    const hasImpact = /impact\s*section\s*:/i.test(content);
+    console.log('🔍 [Parse] Markers found — ABOUT:', hasAbout, '| HOW IT WORKS:', hasHowItWorks, '| IMPACT:', hasImpact);
+
+    let aboutSection = this.extractSection(content, 'ABOUT SECTION:', ['HOW IT WORKS SECTION:', 'IMPACT SECTION:']);
+    let howItWorksSection = this.extractSection(content, 'HOW IT WORKS SECTION:', ['IMPACT SECTION:']);
+    let impactSection = this.extractSection(content, 'IMPACT SECTION:', []);
+
+    console.log('🔍 [Parse] Extracted lengths — about:', aboutSection.length, '| howItWorks:', howItWorksSection.length, '| impact:', impactSection.length);
+
+    // Strategy 3: If no markers found at all, try splitting by ## headings or proportionally
+    if (!aboutSection && !howItWorksSection && !impactSection && content.length > 200) {
+      console.log('⚠️ [Parse] No section markers found — attempting heading-based split');
+      const sections = this.splitByHeadingsOrProportionally(content, 3);
+      aboutSection = sections[0] || '';
+      howItWorksSection = sections[1] || '';
+      impactSection = sections[2] || '';
+      console.log('🔍 [Parse] Heading split lengths — about:', aboutSection.length, '| howItWorks:', howItWorksSection.length, '| impact:', impactSection.length);
+    }
+
+    const result = {
       about: this.cleanAndFormatMarkdown(aboutSection) || this.getFallbackBlueTeamContent(attackType).about,
       howItWorks: this.cleanAndFormatMarkdown(howItWorksSection) || this.getFallbackBlueTeamContent(attackType).howItWorks,
       impact: this.cleanAndFormatMarkdown(impactSection) || this.getFallbackBlueTeamContent(attackType).impact,
     };
+
+    // Log whether we're using AI content or fallback
+    const usingFallback = [
+      !aboutSection ? 'about' : null,
+      !howItWorksSection ? 'howItWorks' : null,
+      !impactSection ? 'impact' : null,
+    ].filter(Boolean);
+    if (usingFallback.length > 0) {
+      console.log('⚠️ [Parse] Using FALLBACK for sections:', usingFallback.join(', '));
+    } else {
+      console.log('✅ [Parse] All Blue Team sections extracted from AI content');
+    }
+
+    return result;
   }
 
   private parseRedTeamContent(content: string, attackType: string) {
-    const extractSection = (text: string, startMarker: string, endMarkers: string[]): string => {
-      const startIndex = text.toLowerCase().indexOf(startMarker.toLowerCase());
-      if (startIndex === -1) return '';
-      let endIndex = text.length;
-      for (const marker of endMarkers) {
-        const markerIndex = text.toLowerCase().indexOf(marker.toLowerCase(), startIndex + startMarker.length);
-        if (markerIndex !== -1 && markerIndex < endIndex) {
-          endIndex = markerIndex;
-        }
-      }
-      return text.substring(startIndex + startMarker.length, endIndex).trim();
-    };
+    console.log('🔍 [Parse] Parsing Red Team content — total length:', content.length);
 
-    const objectivesSection = extractSection(content, 'OBJECTIVES SECTION:', ['METHODOLOGY SECTION:']);
-    const methodologySection = extractSection(content, 'METHODOLOGY SECTION:', ['EXPLOIT CODE SECTION:']);
-    const exploitSection = extractSection(content, 'EXPLOIT CODE SECTION:', []);
+    const hasObjectives = /objectives\s*section\s*:/i.test(content);
+    const hasMethodology = /methodology\s*section\s*:/i.test(content);
+    const hasExploit = /exploit\s*code\s*section\s*:/i.test(content);
+    console.log('🔍 [Parse] Markers found — OBJECTIVES:', hasObjectives, '| METHODOLOGY:', hasMethodology, '| EXPLOIT CODE:', hasExploit);
 
-    return {
+    let objectivesSection = this.extractSection(content, 'OBJECTIVES SECTION:', ['METHODOLOGY SECTION:', 'EXPLOIT CODE SECTION:']);
+    let methodologySection = this.extractSection(content, 'METHODOLOGY SECTION:', ['EXPLOIT CODE SECTION:']);
+    let exploitSection = this.extractSection(content, 'EXPLOIT CODE SECTION:', []);
+
+    console.log('🔍 [Parse] Extracted lengths — objectives:', objectivesSection.length, '| methodology:', methodologySection.length, '| exploit:', exploitSection.length);
+
+    // Strategy 3: If no markers found at all, try splitting by ## headings or proportionally
+    if (!objectivesSection && !methodologySection && !exploitSection && content.length > 200) {
+      console.log('⚠️ [Parse] No section markers found — attempting heading-based split');
+      const sections = this.splitByHeadingsOrProportionally(content, 3);
+      objectivesSection = sections[0] || '';
+      methodologySection = sections[1] || '';
+      exploitSection = sections[2] || '';
+      console.log('🔍 [Parse] Heading split lengths — objectives:', objectivesSection.length, '| methodology:', methodologySection.length, '| exploit:', exploitSection.length);
+    }
+
+    const result = {
       objectives: this.cleanAndFormatMarkdown(objectivesSection) || this.getFallbackRedTeamContent(attackType).objectives,
       methodology: this.cleanAndFormatMarkdown(methodologySection) || this.getFallbackRedTeamContent(attackType).methodology,
       exploitCode: this.cleanExploitCode(exploitSection) || this.getFallbackRedTeamContent(attackType).exploitCode,
     };
+
+    const usingFallback = [
+      !objectivesSection ? 'objectives' : null,
+      !methodologySection ? 'methodology' : null,
+      !exploitSection ? 'exploitCode' : null,
+    ].filter(Boolean);
+    if (usingFallback.length > 0) {
+      console.log('⚠️ [Parse] Using FALLBACK for sections:', usingFallback.join(', '));
+    } else {
+      console.log('✅ [Parse] All Red Team sections extracted from AI content');
+    }
+
+    return result;
+  }
+
+  /**
+   * Split content by major headings (## or ###) or proportionally if no headings found.
+   * Used as a last-resort fallback when the AI doesn't use our exact section markers.
+   */
+  private splitByHeadingsOrProportionally(content: string, numSections: number): string[] {
+    // Try splitting by ## or ### level headings
+    const headingPattern = /^#{1,3}\s+.+$/gm;
+    const headings: { index: number; match: string }[] = [];
+    let match;
+    while ((match = headingPattern.exec(content)) !== null) {
+      headings.push({ index: match.index, match: match[0] });
+    }
+
+    if (headings.length >= numSections) {
+      // Use heading positions as section boundaries
+      const sections: string[] = [];
+      for (let i = 0; i < numSections; i++) {
+        const start = headings[i].index;
+        const end = i + 1 < headings.length ? headings[i + 1].index : content.length;
+        // For sections beyond our count, append to the last section
+        if (i === numSections - 1) {
+          sections.push(content.substring(start).trim());
+        } else {
+          sections.push(content.substring(start, end).trim());
+        }
+      }
+      return sections;
+    }
+
+    // Proportional split as absolute last resort
+    const chunkSize = Math.floor(content.length / numSections);
+    const sections: string[] = [];
+    for (let i = 0; i < numSections; i++) {
+      const start = i * chunkSize;
+      const end = i === numSections - 1 ? content.length : (i + 1) * chunkSize;
+      // Try to split at paragraph boundary
+      let splitEnd = end;
+      if (i < numSections - 1) {
+        const nextParagraph = content.indexOf('\n\n', end - 100);
+        if (nextParagraph !== -1 && nextParagraph < end + 200) {
+          splitEnd = nextParagraph;
+        }
+      }
+      sections.push(content.substring(start, splitEnd).trim());
+    }
+    return sections;
   }
 
   private cleanAndFormatMarkdown(text: string): string {
