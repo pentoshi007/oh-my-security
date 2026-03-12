@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { storeContentInSupabase, supabaseAdmin } from '../../../lib/supabase'
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { createHash } from 'crypto'
 
 // Force dynamic rendering for cron jobs
 export const dynamic = 'force-dynamic'
@@ -763,6 +764,20 @@ const DEFAULT_CONTENT_SYSTEM_PROMPT = 'You are a senior cybersecurity expert and
 
 const COMPACT_CODE_SYSTEM_PROMPT = 'You are a senior cybersecurity educator writing tiny, safe, beginner-friendly educational code examples. Keep responses compact and complete. Prefer toy examples or pseudocode over realistic exploit automation. Follow the user formatting exactly. Do not produce frameworks, CLIs, multi-file systems, or long prose. Use short comments only where helpful.';
 
+const MAX_OPENROUTER_429_RETRIES = 3;
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getRetryDelayMs(attempt: number) {
+  return 2000 * (attempt + 1);
+}
+
+function getKeyFingerprint(value: string): string {
+  return createHash('sha256').update(value).digest('hex').slice(0, 8);
+}
+
 type OpenRouterApiKeys = {
   blue: string;
   red: string;
@@ -1000,71 +1015,87 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
 
     for (let modelIdx = 0; modelIdx < models.length; modelIdx++) {
       const model = models[modelIdx];
-      try {
-        console.log(`🔄 [${options.logLabel}] Calling OpenRouter — model: ${model}`);
+      for (let attempt = 0; attempt <= MAX_OPENROUTER_429_RETRIES; attempt++) {
+        try {
+          console.log(`🔄 [${options.logLabel}] Calling OpenRouter — model: ${model}${attempt > 0 ? ` | retry ${attempt}/${MAX_OPENROUTER_429_RETRIES}` : ''}`);
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${options.apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://oh-my-security.vercel.app',
-            'X-Title': 'Oh-My-Security',
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              {
-                role: 'system',
-                content: options.systemPrompt ?? DEFAULT_CONTENT_SYSTEM_PROMPT,
-              },
-              {
-                role: 'user',
-                content: prompt,
-              }
-            ],
-            temperature: 0.7,
-            max_tokens: options.maxTokens ?? 8192,
-          })
-        });
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${options.apiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://oh-my-security.vercel.app',
+              'X-Title': 'Oh-My-Security',
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                {
+                  role: 'system',
+                  content: options.systemPrompt ?? DEFAULT_CONTENT_SYSTEM_PROMPT,
+                },
+                {
+                  role: 'user',
+                  content: prompt,
+                }
+              ],
+              temperature: 0.7,
+              max_tokens: options.maxTokens ?? 8192,
+            })
+          });
 
-        console.log(`📡 [${options.logLabel}] ${model} — ${response.status} ${response.statusText}`);
+          console.log(`📡 [${options.logLabel}] ${model} — ${response.status} ${response.statusText}`);
 
-        if (response.status === 429) {
-          const errorBody = await response.text().catch(() => '');
-          console.log(`⚠️ [${options.logLabel}] ${model} rate limited (429), trying next model — ${errorBody.substring(0, 200)}`);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          continue;
+          if (response.status === 429) {
+            const errorBody = await response.text().catch(() => '');
+            if (attempt < MAX_OPENROUTER_429_RETRIES) {
+              const delayMs = getRetryDelayMs(attempt);
+              console.log(`⚠️ [${options.logLabel}] ${model} rate limited (429), retrying in ${delayMs}ms — ${errorBody.substring(0, 200)}`);
+              await sleep(delayMs);
+              continue;
+            }
+
+            console.log(`⚠️ [${options.logLabel}] ${model} rate limited (429), retries exhausted — ${errorBody.substring(0, 200)}`);
+            break;
+          }
+
+          if (!response.ok) {
+            const errorBody = await response.text();
+            console.error(`❌ [${options.logLabel}] ${model} error: ${errorBody.substring(0, 500)}`);
+            break;
+          }
+
+          const data = await response.json();
+          const generatedText = data.choices?.[0]?.message?.content;
+          const finishReason = data.choices?.[0]?.finish_reason;
+          const usage = data.usage;
+
+          console.log(`📊 [${options.logLabel}] Response stats — finish_reason:`, finishReason, '| content length:', generatedText?.length || 0, '| tokens:', JSON.stringify(usage || {}));
+          console.log(`📝 [${options.logLabel}] First 300 chars:`, generatedText?.substring(0, 300) || 'EMPTY');
+
+          if (!generatedText) {
+            console.error(`❌ [${options.logLabel}] Empty response, trying next model`);
+            break;
+          }
+
+          return generatedText;
+        } catch (error) {
+          console.error(`❌ [${options.logLabel}] ${model} failed:`, error instanceof Error ? error.message : 'Unknown error');
+          if (attempt < MAX_OPENROUTER_429_RETRIES) {
+            const delayMs = getRetryDelayMs(attempt);
+            console.log(`🔄 [${options.logLabel}] Retrying after failure in ${delayMs}ms...`);
+            await sleep(delayMs);
+            continue;
+          }
+
+          if (modelIdx < models.length - 1) {
+            console.log(`🔄 [${options.logLabel}] Trying next fallback model...`);
+            await sleep(2000);
+            break;
+          }
+
+          throw new Error(`OpenRouter API error: All models failed. Last: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
-
-        if (!response.ok) {
-          const errorBody = await response.text();
-          console.error(`❌ [${options.logLabel}] ${model} error: ${errorBody.substring(0, 500)}`);
-          continue;
-        }
-
-        const data = await response.json();
-        const generatedText = data.choices?.[0]?.message?.content;
-        const finishReason = data.choices?.[0]?.finish_reason;
-        const usage = data.usage;
-
-        console.log(`📊 [${options.logLabel}] Response stats — finish_reason:`, finishReason, '| content length:', generatedText?.length || 0, '| tokens:', JSON.stringify(usage || {}));
-        console.log(`📝 [${options.logLabel}] First 300 chars:`, generatedText?.substring(0, 300) || 'EMPTY');
-
-        if (!generatedText) {
-          console.error(`❌ [${options.logLabel}] Empty response, trying next model`);
-          continue;
-        }
-
-        return generatedText;
-      } catch (error) {
-        console.error(`❌ [${options.logLabel}] ${model} failed:`, error instanceof Error ? error.message : 'Unknown error');
-        if (modelIdx < models.length - 1) {
-          console.log(`🔄 [${options.logLabel}] Trying next fallback model...`);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          continue;
-        }
-        throw new Error(`OpenRouter API error: All models failed. Last: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
     throw new Error('OpenRouter API error: All fallback models exhausted');
@@ -1366,6 +1397,10 @@ async function generateDailyContent() {
   if (!newsApiKey || !openrouterApiKey || !openrouterRedApiKey || !openrouterCodeApiKey) {
     throw new Error('Missing required API keys: NEWS_API_KEY, OPENROUTER_API_KEY, OPENROUTER_RED_API_KEY, and OPENROUTER_CODE_API_KEY must be set');
   }
+
+  console.log(
+    `🔑 OpenRouter key fingerprints — search:${getKeyFingerprint(searchApiKey!)} | blue:${getKeyFingerprint(openrouterApiKey)} | red:${getKeyFingerprint(openrouterRedApiKey)} | code:${getKeyFingerprint(openrouterCodeApiKey)}`
+  );
 
   const newsService = new NewsAPIService(newsApiKey, searchApiKey!);
   const aiService = new AIContentGenerator({
