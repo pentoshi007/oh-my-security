@@ -151,7 +151,7 @@ flowchart TD
 - Supabase account (free tier)
 - MongoDB Atlas account (free tier)
 - NewsAPI.org API key (free tier)
-- OpenRouter API key (free tier)
+- OpenRouter API keys (free tier or paid)
 
 ### Installation
 
@@ -176,9 +176,14 @@ flowchart TD
    SUPABASE_ANON_KEY=your_anon_key
    SUPABASE_SERVICE_KEY=your_service_role_key
 
-   # Content Generation (Required)
-   NEWS_API_KEY=your_newsapi_key
-   OPENROUTER_API_KEY=your_openrouter_api_key
+    # Content Generation (Required)
+    NEWS_API_KEY=your_newsapi_key
+    OPENROUTER_API_KEY=your_openrouter_blue_team_key
+    OPENROUTER_RED_API_KEY=your_openrouter_red_team_key
+    OPENROUTER_CODE_API_KEY=your_openrouter_exploit_code_key
+
+    # AI News Search (Optional - falls back to OPENROUTER_API_KEY)
+    OPENROUTER_SEARCH_API_KEY=your_openrouter_search_key
 
    # Email Subscriptions (Required)
    MONGODB_URI=your_mongodb_connection_string

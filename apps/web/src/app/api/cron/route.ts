@@ -753,20 +753,24 @@ ${articleList}`;
   }
 }
 
-const CONTENT_MODELS = [
-  'openai/gpt-oss-120b:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'qwen/qwen3-coder:free',
-];
+const GPT_OSS_MODEL = 'openai/gpt-oss-120b:free';
 
-const CODE_MODELS = [
-  'qwen/qwen3-coder:free',
-  'openai/gpt-oss-120b:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-];
+const CONTENT_MODELS = [GPT_OSS_MODEL];
+
+const CODE_MODELS = [GPT_OSS_MODEL];
+
+const DEFAULT_CONTENT_SYSTEM_PROMPT = 'You are a senior cybersecurity expert and gifted educator. Write in simple, clear language that a complete beginner can understand — but never sacrifice depth or accuracy. When you use a technical term, immediately explain it in plain English in parentheses, e.g. "SQL injection (a trick where attackers slip malicious database commands into a website\\\'s input fields)". Use analogies and real-world comparisons to make complex ideas click. Follow the formatting instructions in the user message EXACTLY. Always use the EXACT section markers specified. Your response must be comprehensive, detailed, and thorough — minimum 350 words per section. Aim for longer, richer explanations rather than shorter ones.';
+
+const COMPACT_CODE_SYSTEM_PROMPT = 'You are a senior cybersecurity educator writing tiny, safe, beginner-friendly educational code examples. Keep responses compact and complete. Prefer toy examples or pseudocode over realistic exploit automation. Follow the user formatting exactly. Do not produce frameworks, CLIs, multi-file systems, or long prose. Use short comments only where helpful.';
+
+type OpenRouterApiKeys = {
+  blue: string;
+  red: string;
+  code: string;
+};
 
 class AIContentGenerator {
-  constructor(private apiKey: string) { }
+  constructor(private apiKeys: OpenRouterApiKeys) { }
 
   async generateBlueTeamContent(attack: any, newsArticles: any[]) {
     const newsContext = this.createNewsContext(newsArticles);
@@ -836,7 +840,10 @@ Write a detailed impact analysis that anyone can understand, covering:
 Minimum 300 words. Use sub-headings to separate impact categories.`;
 
     try {
-      const content = await this.generateContent(prompt);
+      const content = await this.generateContent(prompt, {
+        apiKey: this.apiKeys.blue,
+        logLabel: 'Blue Team',
+      });
       console.log('✅ AI Blue Team content generated successfully');
       return this.parseBlueTeamContent(content, attack.name);
     } catch (error) {
@@ -906,36 +913,49 @@ Minimum 400 words. Use numbered phases with sub-headings for each.
 
 YOU MUST WRITE BOTH SECTIONS IN FULL. Do NOT stop after the objectives section.`;
 
-    const exploitCodePrompt = `You are a senior red team operator writing educational exploit code examples for "Oh-My-Security", a daily cybersecurity education platform.
+    const exploitCodePrompt = `You are a senior red team operator writing compact educational code examples for "Oh-My-Security", a daily cybersecurity education platform.
 
 ${attackContext}
 
-Write educational, well-commented code examples that demonstrate the ${attack.name} technique.
+Write compact, beginner-friendly code examples that demonstrate the core idea behind ${attack.name}.
 
 Start with this header:
-# ${attack.name} — Educational Simulation Framework
+# ${attack.name} — Educational Code Examples
 # WARNING: For authorized educational and testing purposes only
 # Environment: Controlled lab / authorized penetration test only
 
 Include:
-- Multiple code snippets showing different aspects of the attack
-- Clear comments in plain English explaining what each section does, WHY it works, and what a defender would see
-- Write code comments so a beginner can understand — explain not just WHAT each line does, but WHY an attacker would do it
-- Detection signatures or indicators that defenders should watch for — explain each one
-- Mitigation code showing how to defend against each technique, with comments explaining the defense logic
+- Exactly 2 short snippets total:
+  1. a very simple educational attack example showing the core concept only
+  2. a matching defensive example showing how to block or detect it
+- Keep each snippet small: roughly 10-20 lines max
+- Keep the entire response concise and complete. Do NOT build a framework, toolkit, CLI, automation pipeline, or multi-file system.
+- Prefer toy examples or pseudocode-style examples over realistic end-to-end exploit automation.
+- Use short comments in plain English explaining what each part does, why it matters, and what a defender should notice
+- End with 3-5 short comment lines listing detection signals defenders should watch for
 
 Do NOT use markdown formatting. Just write plain code with comments.`;
 
     try {
-      console.log('🔄 [Red Team] Generating objectives + methodology...');
-      const objMethodContent = await this.generateContent(objectivesAndMethodologyPrompt);
+      console.log('🔄 [Red Team] Generating objectives + methodology and exploit code in parallel...');
+      const [objMethodContent, exploitContent] = await Promise.all([
+        this.generateContent(objectivesAndMethodologyPrompt, {
+          apiKey: this.apiKeys.red,
+          logLabel: 'Red Team',
+        }),
+        this.generateContent(exploitCodePrompt, {
+          apiKey: this.apiKeys.code,
+          logLabel: 'Exploit Code',
+          models: CODE_MODELS,
+          maxTokens: 2800,
+          systemPrompt: COMPACT_CODE_SYSTEM_PROMPT,
+        }),
+      ]);
       console.log('✅ [Red Team] Objectives + methodology done (' + objMethodContent.length + ' chars)');
 
       const objectivesSection = this.extractSection(objMethodContent, 'OBJECTIVES SECTION:', ['METHODOLOGY SECTION:']);
       const methodologySection = this.extractSection(objMethodContent, 'METHODOLOGY SECTION:', []);
 
-      console.log('🔄 [Red Team] Generating exploit code...');
-      const exploitContent = await this.generateContent(exploitCodePrompt, CODE_MODELS);
       console.log('✅ [Red Team] Exploit code done (' + exploitContent.length + ' chars)');
 
       console.log('✅ AI Red Team content generated — objectives:', objectivesSection.length, '| methodology:', methodologySection.length, '| exploit:', exploitContent.length);
@@ -972,16 +992,21 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
     }).join('\n\n');
   }
 
-  private async generateContent(prompt: string, models: string[] = CONTENT_MODELS): Promise<string> {
+  private async generateContent(
+    prompt: string,
+    options: { apiKey: string; logLabel: string; models?: string[]; maxTokens?: number; systemPrompt?: string }
+  ): Promise<string> {
+    const models = options.models ?? CONTENT_MODELS;
+
     for (let modelIdx = 0; modelIdx < models.length; modelIdx++) {
       const model = models[modelIdx];
       try {
-        console.log(`🔄 [AI] Calling OpenRouter — model: ${model}`);
+        console.log(`🔄 [${options.logLabel}] Calling OpenRouter — model: ${model}`);
 
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            'Authorization': `Bearer ${options.apiKey}`,
             'Content-Type': 'application/json',
             'HTTP-Referer': 'https://oh-my-security.vercel.app',
             'X-Title': 'Oh-My-Security',
@@ -991,7 +1016,7 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
             messages: [
               {
                 role: 'system',
-                content: 'You are a senior cybersecurity expert and gifted educator. Write in simple, clear language that a complete beginner can understand — but never sacrifice depth or accuracy. When you use a technical term, immediately explain it in plain English in parentheses, e.g. "SQL injection (a trick where attackers slip malicious database commands into a website\'s input fields)". Use analogies and real-world comparisons to make complex ideas click. Follow the formatting instructions in the user message EXACTLY. Always use the EXACT section markers specified. Your response must be comprehensive, detailed, and thorough — minimum 350 words per section. Aim for longer, richer explanations rather than shorter ones.',
+                content: options.systemPrompt ?? DEFAULT_CONTENT_SYSTEM_PROMPT,
               },
               {
                 role: 'user',
@@ -999,22 +1024,22 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
               }
             ],
             temperature: 0.7,
-            max_tokens: 8192,
+            max_tokens: options.maxTokens ?? 8192,
           })
         });
 
-        console.log(`📡 [AI] ${model} — ${response.status} ${response.statusText}`);
+        console.log(`📡 [${options.logLabel}] ${model} — ${response.status} ${response.statusText}`);
 
         if (response.status === 429) {
           const errorBody = await response.text().catch(() => '');
-          console.log(`⚠️ [AI] ${model} rate limited (429), trying next model — ${errorBody.substring(0, 200)}`);
+          console.log(`⚠️ [${options.logLabel}] ${model} rate limited (429), trying next model — ${errorBody.substring(0, 200)}`);
           await new Promise(resolve => setTimeout(resolve, 2000));
           continue;
         }
 
         if (!response.ok) {
           const errorBody = await response.text();
-          console.error(`❌ [AI] ${model} error: ${errorBody.substring(0, 500)}`);
+          console.error(`❌ [${options.logLabel}] ${model} error: ${errorBody.substring(0, 500)}`);
           continue;
         }
 
@@ -1023,19 +1048,19 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
         const finishReason = data.choices?.[0]?.finish_reason;
         const usage = data.usage;
 
-        console.log('📊 [AI] Response stats — finish_reason:', finishReason, '| content length:', generatedText?.length || 0, '| tokens:', JSON.stringify(usage || {}));
-        console.log('📝 [AI] First 300 chars:', generatedText?.substring(0, 300) || 'EMPTY');
+        console.log(`📊 [${options.logLabel}] Response stats — finish_reason:`, finishReason, '| content length:', generatedText?.length || 0, '| tokens:', JSON.stringify(usage || {}));
+        console.log(`📝 [${options.logLabel}] First 300 chars:`, generatedText?.substring(0, 300) || 'EMPTY');
 
         if (!generatedText) {
-          console.error('❌ [AI] Empty response, trying next model');
+          console.error(`❌ [${options.logLabel}] Empty response, trying next model`);
           continue;
         }
 
         return generatedText;
       } catch (error) {
-        console.error(`❌ [AI] ${model} failed:`, error instanceof Error ? error.message : 'Unknown error');
+        console.error(`❌ [${options.logLabel}] ${model} failed:`, error instanceof Error ? error.message : 'Unknown error');
         if (modelIdx < models.length - 1) {
-          console.log('🔄 [AI] Trying next fallback model...');
+          console.log(`🔄 [${options.logLabel}] Trying next fallback model...`);
           await new Promise(resolve => setTimeout(resolve, 2000));
           continue;
         }
@@ -1334,14 +1359,20 @@ Do NOT use markdown formatting. Just write plain code with comments.`;
 async function generateDailyContent() {
   const newsApiKey = process.env.NEWS_API_KEY;
   const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+  const openrouterRedApiKey = process.env.OPENROUTER_RED_API_KEY;
+  const openrouterCodeApiKey = process.env.OPENROUTER_CODE_API_KEY;
   const searchApiKey = process.env.OPENROUTER_SEARCH_API_KEY || openrouterApiKey;
 
-  if (!newsApiKey || !openrouterApiKey) {
-    throw new Error('Missing required API keys: NEWS_API_KEY and OPENROUTER_API_KEY must be set');
+  if (!newsApiKey || !openrouterApiKey || !openrouterRedApiKey || !openrouterCodeApiKey) {
+    throw new Error('Missing required API keys: NEWS_API_KEY, OPENROUTER_API_KEY, OPENROUTER_RED_API_KEY, and OPENROUTER_CODE_API_KEY must be set');
   }
 
   const newsService = new NewsAPIService(newsApiKey, searchApiKey!);
-  const aiService = new AIContentGenerator(openrouterApiKey);
+  const aiService = new AIContentGenerator({
+    blue: openrouterApiKey,
+    red: openrouterRedApiKey,
+    code: openrouterCodeApiKey,
+  });
 
   // Fetch recently used attacks from Supabase to avoid duplicates
   mockSpinner.start('Checking recently used attack types...');
@@ -1395,14 +1426,13 @@ async function generateDailyContent() {
     console.log(`📰 Top article: "${articles[0].title}" - ${articles[0].source.name}`);
   }
 
-  // Generate comprehensive content using AI — sequential to avoid 429 rate limits
-  mockSpinner.start('Generating blue team content with AI...');
-  const blueTeamContent = await aiService.generateBlueTeamContent(selectedAttack, articles);
-  mockSpinner.succeed('Blue team content generated');
-
-  mockSpinner.start('Generating red team content with AI...');
-  const redTeamContent = await aiService.generateRedTeamContent(selectedAttack, articles);
-  mockSpinner.succeed('Red team content generated');
+  // Generate blue team, red team objectives/methodology, and exploit code in parallel using separate OpenRouter keys
+  mockSpinner.start('Generating blue and red team content with AI...');
+  const [blueTeamContent, redTeamContent] = await Promise.all([
+    aiService.generateBlueTeamContent(selectedAttack, articles),
+    aiService.generateRedTeamContent(selectedAttack, articles),
+  ]);
+  mockSpinner.succeed('Blue team and red team content generated');
 
   // Use Indian Standard Time (IST) for date generation
   // This ensures content is generated for the correct Indian date at 12:01 AM IST
@@ -1470,13 +1500,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check required environment variables
-    const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'NEWS_API_KEY'];
+    const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'NEWS_API_KEY', 'OPENROUTER_API_KEY', 'OPENROUTER_RED_API_KEY', 'OPENROUTER_CODE_API_KEY'];
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-    // Check for AI API key (OpenRouter)
-    if (!process.env.OPENROUTER_API_KEY) {
-      missingVars.push('OPENROUTER_API_KEY');
-    }
 
     if (missingVars.length > 0) {
       const errorMsg = `Missing required environment variables: ${missingVars.join(', ')}`;
